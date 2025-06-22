@@ -76,7 +76,17 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     const progressInterval = simulateProgress();
 
     try {
-      const story = await storyService.generateStory(selectedOptions);
+      // Map frontend field names to backend expected field names
+      const storyParams = {
+        heroName: selectedOptions.characterName,
+        heroType: selectedOptions.character,
+        setting: selectedOptions.setting,
+        theme: selectedOptions.theme,
+        ageGroup: selectedOptions.ageRange,
+        storyLength: selectedOptions.storyLength
+      };
+
+      const story = await storyService.generateStory(storyParams);
       
       // Clear the progress simulation
       clearInterval(progressInterval);
