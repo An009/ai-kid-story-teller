@@ -1,7 +1,7 @@
 import { Story, StoryOptions } from '../types/Story';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = Deno.env.get('VITE_SUPABASE_URL');
+const SUPABASE_ANON_KEY = Deno.env.get('VITE_SUPABASE_ANON_KEY');
 
 interface GenerateStoryRequest {
   theme: string;
