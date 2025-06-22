@@ -6,6 +6,7 @@ interface ThemeSelectorProps {
   onSelect: (theme: string) => void;
   highContrast: boolean;
   audioEnabled: boolean;
+  disabled?: boolean;
 }
 
 const themes = [
@@ -21,7 +22,8 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   selected, 
   onSelect, 
   highContrast,
-  audioEnabled 
+  audioEnabled,
+  disabled = false
 }) => {
   const playSelectSound = () => {
     if (audioEnabled && 'speechSynthesis' in window) {
@@ -35,7 +37,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   return (
     <div className={`${
       highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
-    } backdrop-blur-sm rounded-2xl p-6 border shadow-lg`}>
+    } backdrop-blur-sm rounded-2xl p-6 border shadow-lg ${disabled ? 'opacity-50' : ''}`}>
       <h3 className={`text-2xl font-bold text-center mb-6 ${
         highContrast ? 'text-white' : 'text-gray-800'
       }`}>
@@ -51,17 +53,20 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
             <button
               key={theme.id}
               onClick={() => {
-                onSelect(theme.id);
-                playSelectSound();
+                if (!disabled) {
+                  onSelect(theme.id);
+                  playSelectSound();
+                }
               }}
-              className={`group relative p-4 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+              disabled={disabled}
+              className={`group relative p-4 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed ${
                 isSelected
                   ? highContrast
                     ? 'bg-white text-black shadow-lg'
                     : `bg-gradient-to-br ${theme.color} text-white shadow-lg scale-105`
                   : highContrast
-                    ? 'bg-gray-700 text-white hover:bg-gray-600'
-                    : 'bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300'
+                    ? 'bg-gray-700 text-white hover:bg-gray-600 disabled:hover:bg-gray-700'
+                    : 'bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:hover:from-gray-100 disabled:hover:to-gray-200'
               }`}
             >
               <div className="flex flex-col items-center space-y-2">
