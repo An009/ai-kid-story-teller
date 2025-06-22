@@ -55,17 +55,28 @@ class StoryService {
       return {
         'X-Demo-User-Id': 'demo-user-id',
         'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
       };
     }
     
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
     };
   }
 
   async generateStory(options: StoryOptions): Promise<Story> {
     try {
+      // Validate environment variables
+      if (!SUPABASE_URL) {
+        throw new Error('Supabase URL is not configured. Please check your environment variables.');
+      }
+      
+      if (!SUPABASE_ANON_KEY) {
+        throw new Error('Supabase anonymous key is not configured. Please check your environment variables.');
+      }
+
       const request: GenerateStoryRequest = {
         theme: options.theme,
         heroName: options.characterName,
@@ -77,18 +88,35 @@ class StoryService {
         magicLevel: 'medium'
       };
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-story`, {
+      const functionUrl = `${SUPABASE_URL}/functions/v1/generate-story`;
+      console.log('Making request to:', functionUrl);
+      console.log('Request payload:', request);
+
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(request),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data: ApiStoryResponse = await response.json();
+      console.log('Success response:', data);
 
       if (!data.success) {
         throw new Error('Failed to generate story');
@@ -111,6 +139,12 @@ class StoryService {
 
     } catch (error) {
       console.error('Error generating story:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to the story generation service. Please check your internet connection and try again.');
+      }
+      
       throw new Error(error instanceof Error ? error.message : 'Failed to generate story');
     }
   }
@@ -122,19 +156,33 @@ class StoryService {
     favoritesOnly?: boolean;
   } = {}): Promise<{ stories: Story[]; pagination: any }> {
     try {
+      // Validate environment variables
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error('Supabase configuration is missing. Please check your environment variables.');
+      }
+
       const params = new URLSearchParams();
       if (options.limit) params.append('limit', options.limit.toString());
       if (options.offset) params.append('offset', options.offset.toString());
       if (options.theme) params.append('theme', options.theme);
       if (options.favoritesOnly) params.append('favorites', 'true');
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/get-user-stories?${params}`, {
+      const functionUrl = `${SUPABASE_URL}/functions/v1/get-user-stories?${params}`;
+
+      const response = await fetch(functionUrl, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data: StoriesResponse = await response.json();
@@ -165,6 +213,11 @@ class StoryService {
 
     } catch (error) {
       console.error('Error fetching user stories:', error);
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to the story service. Please check your internet connection and try again.');
+      }
+      
       throw new Error(error instanceof Error ? error.message : 'Failed to fetch stories');
     }
   }
@@ -174,7 +227,14 @@ class StoryService {
     incrementReadCount?: boolean;
   }): Promise<void> {
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/update-story`, {
+      // Validate environment variables
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error('Supabase configuration is missing. Please check your environment variables.');
+      }
+
+      const functionUrl = `${SUPABASE_URL}/functions/v1/update-story`;
+
+      const response = await fetch(functionUrl, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
@@ -184,7 +244,14 @@ class StoryService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -195,6 +262,11 @@ class StoryService {
 
     } catch (error) {
       console.error('Error updating story:', error);
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to the story service. Please check your internet connection and try again.');
+      }
+      
       throw new Error(error instanceof Error ? error.message : 'Failed to update story');
     }
   }

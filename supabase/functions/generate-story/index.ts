@@ -203,8 +203,12 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    console.log('Edge function called with method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
     // Validate request method
     if (req.method !== 'POST') {
+      console.log('Invalid method:', req.method);
       return new Response(
         JSON.stringify({ error: 'Method not allowed' }),
         {
@@ -215,9 +219,18 @@ Deno.serve(async (req: Request) => {
     }
 
     // Check for required environment variables
+    console.log('Checking environment variables...');
+    console.log('COHERE_API_KEY exists:', !!COHERE_API_KEY);
+    console.log('SUPABASE_URL exists:', !!SUPABASE_URL);
+    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!SUPABASE_SERVICE_ROLE_KEY);
+
     if (!COHERE_API_KEY) {
+      console.error('COHERE_API_KEY not found');
       return new Response(
-        JSON.stringify({ error: 'Cohere API key not configured' }),
+        JSON.stringify({ 
+          error: 'Cohere API key not configured',
+          message: 'The story generation service is not properly configured. Please contact support.'
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -229,13 +242,19 @@ Deno.serve(async (req: Request) => {
     const demoUserHeader = req.headers.get('X-Demo-User-Id');
     let userId: string;
 
+    console.log('Demo user header:', demoUserHeader);
+
     if (demoUserHeader === 'demo-user-id') {
       // Use hardcoded demo user ID for database compatibility
       userId = '00000000-0000-0000-0000-000000000001';
+      console.log('Using demo user ID:', userId);
     } else {
       // Get authorization header for real users
       const authHeader = req.headers.get('Authorization');
+      console.log('Auth header exists:', !!authHeader);
+      
       if (!authHeader) {
+        console.error('No authorization header found');
         return new Response(
           JSON.stringify({ error: 'Authorization header required' }),
           {
@@ -248,15 +267,33 @@ Deno.serve(async (req: Request) => {
       // Extract user ID from JWT token
       const token = authHeader.replace('Bearer ', '');
       userId = token; // In a real implementation, decode and verify the JWT
+      console.log('Using token as user ID');
     }
 
     // Parse request body
-    const requestBody: StoryRequest = await req.json();
+    let requestBody: StoryRequest;
+    try {
+      const bodyText = await req.text();
+      console.log('Request body:', bodyText);
+      requestBody = JSON.parse(bodyText);
+    } catch (error) {
+      console.error('Failed to parse request body:', error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('Parsed request:', requestBody);
 
     // Validate required fields
     const requiredFields = ['theme', 'heroName', 'heroType', 'setting', 'ageGroup', 'storyLength'];
     for (const field of requiredFields) {
       if (!requestBody[field as keyof StoryRequest]) {
+        console.error(`Missing required field: ${field}`);
         return new Response(
           JSON.stringify({ error: `Missing required field: ${field}` }),
           {
@@ -269,6 +306,7 @@ Deno.serve(async (req: Request) => {
 
     // Validate enum values
     if (!['4-6', '7-9', '10-12'].includes(requestBody.ageGroup)) {
+      console.error('Invalid age group:', requestBody.ageGroup);
       return new Response(
         JSON.stringify({ error: 'Invalid age group' }),
         {
@@ -279,6 +317,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!['short', 'medium', 'long'].includes(requestBody.storyLength)) {
+      console.error('Invalid story length:', requestBody.storyLength);
       return new Response(
         JSON.stringify({ error: 'Invalid story length' }),
         {
@@ -288,35 +327,44 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log('Starting story generation...');
+
     // Generate story prompt
     const prompt = constructPrompt(requestBody);
+    console.log('Generated prompt length:', prompt.length);
 
     // Generate story using Cohere API
     const story = await generateStoryWithCohere(prompt);
+    console.log('Story generated successfully');
 
     // Save story to database
     const savedStory = await saveStoryToDatabase(story, requestBody, userId);
+    console.log('Story saved to database with ID:', savedStory.id);
 
     // Return the generated story
+    const response = {
+      success: true,
+      story: {
+        id: savedStory.id,
+        title: story.title,
+        content: story.content,
+        moral: story.moral,
+        theme: requestBody.theme,
+        heroName: requestBody.heroName,
+        heroType: requestBody.heroType,
+        setting: requestBody.setting,
+        ageGroup: requestBody.ageGroup,
+        storyLength: requestBody.storyLength,
+        mood: requestBody.mood || 'happy',
+        magicLevel: requestBody.magicLevel || 'medium',
+        createdAt: savedStory.created_at
+      }
+    };
+
+    console.log('Returning successful response');
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        story: {
-          id: savedStory.id,
-          title: story.title,
-          content: story.content,
-          moral: story.moral,
-          theme: requestBody.theme,
-          heroName: requestBody.heroName,
-          heroType: requestBody.heroType,
-          setting: requestBody.setting,
-          ageGroup: requestBody.ageGroup,
-          storyLength: requestBody.storyLength,
-          mood: requestBody.mood || 'happy',
-          magicLevel: requestBody.magicLevel || 'medium',
-          createdAt: savedStory.created_at
-        }
-      }),
+      JSON.stringify(response),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -325,6 +373,7 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error('Error in generate-story function:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     return new Response(
       JSON.stringify({
