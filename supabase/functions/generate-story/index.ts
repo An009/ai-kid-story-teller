@@ -237,9 +237,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Extract user ID from JWT token (simplified - in production, verify the token)
+    // Extract user ID from JWT token and handle demo user case
     const token = authHeader.replace('Bearer ', '');
-    const userId = token; // In a real implementation, decode and verify the JWT
+    let userId = token;
+    
+    // If it's the demo user ID, replace with a valid UUID for database compatibility
+    if (userId === 'demo-user-id') {
+      userId = '00000000-0000-0000-0000-000000000001';
+    }
 
     // Parse request body
     const requestBody: StoryRequest = await req.json();
