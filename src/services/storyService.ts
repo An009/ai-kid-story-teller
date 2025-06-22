@@ -50,6 +50,14 @@ class StoryService {
     // For now, we'll use a placeholder
     const token = localStorage.getItem('supabase_auth_token') || 'demo-user-id';
     
+    // If it's the demo user, use a custom header instead of Authorization Bearer
+    if (token === 'demo-user-id') {
+      return {
+        'X-Demo-User-Id': 'demo-user-id',
+        'Content-Type': 'application/json',
+      };
+    }
+    
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',

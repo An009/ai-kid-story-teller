@@ -225,25 +225,29 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authorization header required' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    // Check for demo user header first
+    const demoUserHeader = req.headers.get('X-Demo-User-Id');
+    let userId: string;
 
-    // Extract user ID from JWT token and handle demo user case
-    const token = authHeader.replace('Bearer ', '');
-    let userId = token;
-    
-    // If it's the demo user ID, replace with a valid UUID for database compatibility
-    if (userId === 'demo-user-id') {
+    if (demoUserHeader === 'demo-user-id') {
+      // Use hardcoded demo user ID for database compatibility
       userId = '00000000-0000-0000-0000-000000000001';
+    } else {
+      // Get authorization header for real users
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Authorization header required' }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // Extract user ID from JWT token
+      const token = authHeader.replace('Bearer ', '');
+      userId = token; // In a real implementation, decode and verify the JWT
     }
 
     // Parse request body
