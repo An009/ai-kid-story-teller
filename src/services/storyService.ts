@@ -242,6 +242,7 @@ class StoryService {
         headers: {
           'Authorization': `Bearer ${this.supabaseAnonKey}`,
           'Content-Type': 'application/json',
+          'apikey': this.supabaseAnonKey,
         },
       });
 

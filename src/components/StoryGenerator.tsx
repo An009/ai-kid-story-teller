@@ -114,9 +114,12 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     
     const progressInterval = simulateProgress();
 
+    // Declare storyParams outside the try block so it's accessible in catch
+    let storyParams;
+
     try {
       // Map frontend field names to backend expected field names
-      const storyParams = {
+      storyParams = {
         heroName: selectedOptions.characterName.trim(),
         heroType: selectedOptions.character,
         setting: selectedOptions.setting,
