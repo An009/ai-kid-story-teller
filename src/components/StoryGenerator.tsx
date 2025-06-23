@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, Wand2, User, MapPin, Heart, Clock, BookOpen, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Wand2, User, MapPin, Heart, Clock, BookOpen, Loader2, AlertCircle } from 'lucide-react';
 import CharacterSelector from './CharacterSelector';
 import SettingSelector from './SettingSelector';
 import ThemeSelector from './ThemeSelector';
@@ -29,20 +29,44 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
   const [generationProgress, setGenerationProgress] = useState(0);
   const [generationStatus, setGenerationStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+
+  // Test connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        console.log('🔍 Testing Supabase connection on component mount...');
+        const isConnected = await storyService.testConnection();
+        console.log('🔍 Connection test result:', isConnected);
+        
+        if (!isConnected) {
+          setError('Unable to connect to story generation service. Please check your internet connection.');
+        }
+      } catch (error) {
+        console.error('❌ Connection test error:', error);
+        setError('Connection test failed. Please refresh the page.');
+      }
+    };
+
+    testConnection();
+  }, []);
 
   const handleOptionChange = (type: keyof StoryOptions, value: string) => {
+    console.log('🎛️ Option changed:', type, '=', value);
     setSelectedOptions(prev => ({
       ...prev,
       [type]: value
     }));
     setError(null);
+    setDebugInfo(null);
   };
 
   const simulateProgress = () => {
     const steps = [
-      { progress: 20, status: 'Preparing your magical story...' },
-      { progress: 40, status: 'Choosing the perfect adventure...' },
-      { progress: 60, status: 'Adding characters and dialogue...' },
+      { progress: 10, status: 'Connecting to AI service...' },
+      { progress: 25, status: 'Preparing your magical story...' },
+      { progress: 45, status: 'Choosing the perfect adventure...' },
+      { progress: 65, status: 'Adding characters and dialogue...' },
       { progress: 80, status: 'Weaving in the moral lesson...' },
       { progress: 95, status: 'Adding final touches...' },
       { progress: 100, status: 'Story complete!' }
@@ -57,41 +81,79 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
       } else {
         clearInterval(interval);
       }
-    }, 800);
+    }, 1000);
 
     return interval;
   };
 
   const handleGenerate = async () => {
+    console.log('🚀 Generate button clicked!');
+    console.log('📋 Current options:', selectedOptions);
+
+    // Validate required fields
     if (!selectedOptions.character || !selectedOptions.setting || !selectedOptions.theme || !selectedOptions.characterName.trim()) {
-      setError('Please complete all fields to generate your story');
+      const missingFields = [];
+      if (!selectedOptions.characterName.trim()) missingFields.push('Character name');
+      if (!selectedOptions.character) missingFields.push('Character type');
+      if (!selectedOptions.setting) missingFields.push('Setting');
+      if (!selectedOptions.theme) missingFields.push('Theme');
+      
+      const errorMsg = `Please complete all fields: ${missingFields.join(', ')}`;
+      console.error('❌ Validation failed:', errorMsg);
+      setError(errorMsg);
       return;
     }
 
+    console.log('✅ Validation passed, starting generation...');
+
     setIsGenerating(true);
     setError(null);
+    setDebugInfo(null);
     setGenerationProgress(0);
-    setGenerationStatus('Starting story generation...');
+    setGenerationStatus('Initializing...');
     
     const progressInterval = simulateProgress();
 
     try {
       // Map frontend field names to backend expected field names
       const storyParams = {
-        heroName: selectedOptions.characterName,
+        heroName: selectedOptions.characterName.trim(),
         heroType: selectedOptions.character,
         setting: selectedOptions.setting,
         theme: selectedOptions.theme,
         ageGroup: selectedOptions.ageRange,
-        storyLength: selectedOptions.storyLength
+        storyLength: selectedOptions.storyLength,
+        mood: 'happy',
+        magicLevel: 'medium'
       };
 
-      const story = await storyService.generateStory(storyParams);
+      console.log('📦 Sending story generation request with params:', storyParams);
+
+      const generatedStory = await storyService.generateStory(storyParams);
       
+      console.log('🎉 Story generation successful!', generatedStory);
+
       // Clear the progress simulation
       clearInterval(progressInterval);
       setGenerationProgress(100);
       setGenerationStatus('Story ready!');
+      
+      // Transform to our Story interface
+      const story: Story = {
+        id: generatedStory.id,
+        title: generatedStory.title,
+        content: generatedStory.content,
+        character: generatedStory.heroType,
+        characterName: generatedStory.heroName,
+        setting: generatedStory.setting,
+        theme: generatedStory.theme,
+        ageRange: generatedStory.ageGroup,
+        storyLength: generatedStory.storyLength,
+        createdAt: generatedStory.createdAt,
+        moral: generatedStory.moral
+      };
+
+      console.log('📖 Transformed story for display:', story);
       
       // Small delay to show completion
       setTimeout(() => {
@@ -99,12 +161,23 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
         setIsGenerating(false);
         setGenerationProgress(0);
         setGenerationStatus('');
-      }, 500);
+      }, 1000);
 
     } catch (error) {
       clearInterval(progressInterval);
-      console.error('Story generation error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate story. Please try again.');
+      console.error('💥 Story generation failed:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate story. Please try again.';
+      
+      // Set debug info for troubleshooting
+      setDebugInfo({
+        error: errorMessage,
+        params: storyParams,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      });
+      
+      setError(errorMessage);
       setIsGenerating(false);
       setGenerationProgress(0);
       setGenerationStatus('');
@@ -120,12 +193,36 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
         <p className="text-xl opacity-80">Choose your story elements and watch AI magic unfold.</p>
       </div>
 
+      {/* Debug Info Panel (only shown when there's debug info) */}
+      {debugInfo && (
+        <div className={`mb-6 p-4 rounded-xl ${
+          highContrast ? 'bg-gray-900 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'
+        } border-2`}>
+          <details>
+            <summary className="cursor-pointer font-medium mb-2">🔍 Debug Information (Click to expand)</summary>
+            <pre className="text-xs overflow-auto">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          </details>
+        </div>
+      )}
+
       {/* Error Display */}
       {error && (
         <div className={`mb-6 p-4 rounded-xl ${
           highContrast ? 'bg-red-900 border-red-500 text-white' : 'bg-red-50 border-red-200 text-red-800'
         } border-2`}>
-          <p className="font-medium">{error}</p>
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium">{error}</p>
+              {error.includes('connect') && (
+                <p className="text-sm mt-2 opacity-80">
+                  Try refreshing the page or check your internet connection.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -159,6 +256,12 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
               highContrast ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {generationStatus}
+            </p>
+            
+            <p className={`text-sm mt-2 ${
+              highContrast ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              Progress: {generationProgress}%
             </p>
           </div>
         </div>

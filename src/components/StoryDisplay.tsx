@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award } from 'lucide-react';
+import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle } from 'lucide-react';
 import { Story } from '../types/Story';
 
 interface StoryDisplayProps {
@@ -25,6 +25,13 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
   const words = story.content.split(' ');
 
+  console.log('📖 StoryDisplay rendered with story:', {
+    id: story.id,
+    title: story.title,
+    contentLength: story.content.length,
+    wordsCount: words.length
+  });
+
   useEffect(() => {
     return () => {
       if (utterance) {
@@ -34,15 +41,23 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   }, [utterance]);
 
   const handleReadAloud = () => {
-    if (!audioEnabled || !('speechSynthesis' in window)) return;
+    if (!audioEnabled || !('speechSynthesis' in window)) {
+      console.log('🔇 Audio disabled or speech synthesis not available');
+      return;
+    }
+
+    console.log('🔊 Read aloud clicked, isReading:', isReading);
 
     if (isReading) {
       speechSynthesis.pause();
       setIsReading(false);
+      console.log('⏸️ Speech paused');
     } else {
       if (speechSynthesis.paused) {
         speechSynthesis.resume();
+        console.log('▶️ Speech resumed');
       } else {
+        console.log('🎤 Starting new speech synthesis');
         const newUtterance = new SpeechSynthesisUtterance(story.content);
         newUtterance.rate = readingSpeed;
         newUtterance.pitch = 1.2;
@@ -68,6 +83,13 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         };
 
         newUtterance.onend = () => {
+          console.log('🎤 Speech ended');
+          setIsReading(false);
+          setCurrentWordIndex(0);
+        };
+
+        newUtterance.onerror = (event) => {
+          console.error('🎤 Speech error:', event);
           setIsReading(false);
           setCurrentWordIndex(0);
         };
@@ -80,15 +102,22 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   };
 
   const handleStop = () => {
+    console.log('⏹️ Stop reading clicked');
     speechSynthesis.cancel();
     setIsReading(false);
     setCurrentWordIndex(0);
   };
 
   const handleSave = () => {
-    onSave(story);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+    console.log('💾 Save story clicked:', story.id);
+    try {
+      onSave(story);
+      setIsSaved(true);
+      console.log('✅ Story saved successfully');
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (error) {
+      console.error('❌ Error saving story:', error);
+    }
   };
 
   const getAgeRangeColor = (ageRange: string) => {
@@ -108,6 +137,29 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Validate story content
+  if (!story.content || story.content.trim().length === 0) {
+    console.error('❌ Story content is empty or invalid');
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className={`text-center p-8 rounded-2xl ${
+          highContrast ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
+        }`}>
+          <h2 className="text-2xl font-bold mb-4">Story Not Available</h2>
+          <p className="mb-4">The story content could not be loaded.</p>
+          <button
+            onClick={onBack}
+            className={`px-6 py-3 rounded-lg ${
+              highContrast ? 'bg-white text-black' : 'bg-coral text-white'
+            }`}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -183,7 +235,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
                   : 'bg-coral text-white hover:bg-coral/80 shadow-md hover:shadow-lg'
             }`}
           >
-            <Save className="w-5 h-5" />
+            {isSaved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
             <span>{isSaved ? 'Saved!' : 'Save Story'}</span>
           </button>
         </div>
@@ -293,6 +345,21 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             </div>
           </div>
         )}
+
+        {/* Debug Info for Story */}
+        <div className={`mt-4 p-3 rounded-lg text-xs ${
+          highContrast ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-500'
+        }`}>
+          <details>
+            <summary className="cursor-pointer">📊 Story Stats</summary>
+            <div className="mt-2 space-y-1">
+              <div>Story ID: {story.id}</div>
+              <div>Word Count: {words.length}</div>
+              <div>Character Count: {story.content.length}</div>
+              <div>Created: {story.createdAt}</div>
+            </div>
+          </details>
+        </div>
       </div>
     </div>
   );
