@@ -104,24 +104,24 @@ function AppContent() {
         animationSpeed: 1
       }}
     >
-      <div className={`min-h-screen transition-all duration-300 relative ${
+      <div className={`min-h-screen transition-all duration-300 relative overflow-visible ${
         textSize === 'small' ? 'text-sm' : textSize === 'large' ? 'text-lg' : 'text-base'
       }`}>
         
-        {/* Animated Background - Base Layer */}
+        {/* Animated Background - Base Layer (z-1) */}
         <AnimatedBackground
           particleCount={prefersReducedMotion ? 0 : 65}
           enableParticles={!prefersReducedMotion && !highContrast}
           blurIntensity={highContrast ? 1 : 2.5}
-          className={highContrast ? 'high-contrast' : ''}
+          className={`${highContrast ? 'high-contrast' : ''} z-1`}
         />
         
-        {/* High contrast overlay when needed - Base Layer */}
+        {/* High contrast overlay when needed - Base Layer (z-1) */}
         {highContrast && (
-          <div className="fixed inset-0 bg-black/70 z-0" />
+          <div className="fixed inset-0 bg-black/70 z-1" />
         )}
         
-        {/* 3D Character - Interactive Character Layer */}
+        {/* 3D Character - Interactive Character Layer (z-15) */}
         <CharacterIntegration
           position={getCharacterPosition()}
           state={getCharacterState()}
@@ -131,7 +131,7 @@ function AppContent() {
           }}
         />
 
-        {/* Header - Navigation Layer */}
+        {/* Header - Navigation Layer (z-10) */}
         <header className={`${
           highContrast ? 'bg-gray-900 border-white' : 'bg-white/80 border-white/20'
         } backdrop-blur-sm border-b sticky top-0 z-10 relative`}>
@@ -177,7 +177,7 @@ function AppContent() {
           </div>
         </header>
 
-        {/* Navigation - Navigation Layer */}
+        {/* Navigation - Navigation Layer (z-10) */}
         <nav className={`${
           highContrast ? 'bg-gray-800' : 'bg-white/60'
         } backdrop-blur-sm border-b border-white/20 relative z-10`}>
@@ -218,7 +218,7 @@ function AppContent() {
           </div>
         </nav>
 
-        {/* Accessibility Panel - Modal Layer */}
+        {/* Accessibility Panel - Modal Layer (z-1000) */}
         {isAccessibilityOpen && (
           <AccessibilityPanel
             highContrast={highContrast}
@@ -231,7 +231,7 @@ function AppContent() {
           />
         )}
 
-        {/* Main Content - Base Layer */}
+        {/* Main Content - Base Layer (z-1) */}
         <main className="container mx-auto px-4 py-8 relative z-1">
           {currentView === 'generator' && (
             <StoryGenerator 

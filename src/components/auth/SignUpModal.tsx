@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SignUpModalProps {
@@ -16,6 +16,10 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
   highContrast
 }) => {
   const { signUp } = useAuth();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,16 +31,58 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Reset form when modal opens/closes
+  // Handle modal open/close animations and body scroll
   useEffect(() => {
     if (isOpen) {
+      document.body.classList.add('modal-open');
+      setIsClosing(false);
+      
+      // Reset form when modal opens
       setFormData({ email: '', password: '', confirmPassword: '' });
       setError(null);
       setSuccess(null);
       setShowPassword(false);
       setShowConfirmPassword(false);
+      
+      // Trigger enter animations
+      if (modalRef.current && backdropRef.current) {
+        modalRef.current.classList.add('modal-enter');
+        backdropRef.current.classList.add('backdrop-enter');
+      }
+    } else {
+      document.body.classList.remove('modal-open');
     }
+
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
   }, [isOpen]);
+
+  const handleClose = () => {
+    if (isClosing) return;
+    
+    setIsClosing(true);
+    
+    // Trigger exit animations
+    if (modalRef.current && backdropRef.current) {
+      modalRef.current.classList.remove('modal-enter');
+      modalRef.current.classList.add('modal-exit');
+      backdropRef.current.classList.remove('backdrop-enter');
+      backdropRef.current.classList.add('backdrop-exit');
+    }
+    
+    // Close modal after animation
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+    }, 200);
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -97,7 +143,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
       if (result.success) {
         setSuccess('Account created successfully! Welcome to Story Magic!');
         setTimeout(() => {
-          onClose();
+          handleClose();
         }, 2000);
       } else {
         setError(result.error || 'Failed to create account');
@@ -115,27 +161,42 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
     <>
       {/* Modal Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-49" 
-        onClick={onClose}
+        ref={backdropRef}
+        className="modal-backdrop"
+        onClick={handleBackdropClick}
         aria-hidden="true"
       />
       
       {/* Modal Container */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div className={`${
-          highContrast ? 'bg-gray-900 border-white' : 'bg-white/90 border-white/30'
-        } backdrop-blur-sm rounded-3xl p-6 sm:p-8 border shadow-xl w-full max-w-md mx-auto transform transition-all duration-300`}>
+      <div 
+        ref={modalRef}
+        className="modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="signup-modal-title"
+      >
+        <div className={`
+          w-full rounded-3xl p-8 shadow-2xl
+          ${highContrast 
+            ? 'bg-gray-900 border-2 border-white' 
+            : 'bg-white border border-white/30'
+          }
+          backdrop-blur-sm
+        `}>
           
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-2xl sm:text-3xl font-bold ${
-              highContrast ? 'text-white' : 'text-gray-800'
-            }`}>
+            <h2 
+              id="signup-modal-title"
+              className={`text-3xl font-bold ${
+                highContrast ? 'text-white' : 'text-gray-800'
+              }`}
+            >
               Join Story Magic!
             </h2>
             <button
-              onClick={onClose}
-              className={`p-2 rounded-full transition-colors ${
+              onClick={handleClose}
+              className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
                 highContrast
                   ? 'text-white hover:bg-gray-800'
                   : 'text-gray-500 hover:bg-gray-100'
@@ -148,9 +209,9 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
 
           {/* Success Message */}
           {success && (
-            <div className={`mb-6 p-4 rounded-xl ${
+            <div className={`mb-6 p-4 rounded-xl border-2 ${
               highContrast ? 'bg-green-900 border-green-500' : 'bg-green-50 border-green-200'
-            } border-2`}>
+            }`}>
               <div className="flex items-center space-x-3">
                 <CheckCircle className={`w-5 h-5 ${
                   highContrast ? 'text-green-400' : 'text-green-600'
@@ -166,9 +227,9 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className={`mb-6 p-4 rounded-xl ${
+            <div className={`mb-6 p-4 rounded-xl border-2 ${
               highContrast ? 'bg-red-900 border-red-500' : 'bg-red-50 border-red-200'
-            } border-2`}>
+            }`}>
               <div className="flex items-start space-x-3">
                 <AlertCircle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
                   highContrast ? 'text-red-400' : 'text-red-600'
@@ -205,7 +266,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
                     highContrast
                       ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-white'
                       : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500 focus:border-coral'
-                  } focus:outline-none`}
+                  } focus:outline-none focus:ring-2 focus:ring-coral/20`}
                   placeholder="Enter your email"
                   required
                   disabled={isLoading}
@@ -234,7 +295,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
                     highContrast
                       ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-white'
                       : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500 focus:border-coral'
-                  } focus:outline-none`}
+                  } focus:outline-none focus:ring-2 focus:ring-coral/20`}
                   placeholder="Create a password"
                   required
                   disabled={isLoading}
@@ -242,10 +303,11 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-all duration-200 hover:scale-110 ${
                     highContrast ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'
-                  } transition-colors`}
+                  }`}
                   disabled={isLoading}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -294,7 +356,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
                     highContrast
                       ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-white'
                       : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500 focus:border-coral'
-                  } focus:outline-none ${
+                  } focus:outline-none focus:ring-2 focus:ring-coral/20 ${
                     formData.confirmPassword && formData.password !== formData.confirmPassword
                       ? 'border-red-500'
                       : ''
@@ -306,10 +368,11 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-all duration-200 hover:scale-110 ${
                     highContrast ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'
-                  } transition-colors`}
+                  }`}
                   disabled={isLoading}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -323,11 +386,11 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
             <button
               type="submit"
               disabled={isLoading || passwordStrength.strength < 2}
-              className={`w-full py-3 rounded-xl font-medium transition-all duration-200 ${
+              className={`w-full py-3 rounded-xl font-medium transition-all duration-200 hover:scale-105 ${
                 highContrast
                   ? 'bg-white text-black hover:bg-gray-200'
                   : 'bg-gradient-to-r from-coral to-yellow text-white hover:shadow-lg'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -347,7 +410,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
               <button
                 type="button"
                 onClick={onSwitchToLogin}
-                className={`font-medium transition-colors ${
+                className={`font-medium transition-all duration-200 hover:scale-105 ${
                   highContrast
                     ? 'text-white hover:text-gray-300'
                     : 'text-coral hover:text-coral/80'
