@@ -74,15 +74,23 @@ class StoryService {
         'X-Demo-User-Id': 'demo-user-id' // Add demo user header for testing
       };
 
-      console.log('📡 Making API request to:', `${this.supabaseUrl}/functions/v1/generate-story`);
+      const apiUrl = `${this.supabaseUrl}/functions/v1/generate-story`;
+      console.log('📡 Making API request to:', apiUrl);
       console.log('📋 Request headers:', Object.keys(headers));
       console.log('📦 Request payload:', JSON.stringify(params, null, 2));
 
-      const response = await fetch(`${this.supabaseUrl}/functions/v1/generate-story`, {
+      // Add timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(params),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       console.log('📨 Response status:', response.status);
       console.log('📨 Response headers:', Object.fromEntries(response.headers.entries()));
@@ -159,7 +167,14 @@ class StoryService {
       console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       
       if (error instanceof Error) {
-        throw error;
+        // Provide more specific error messages
+        if (error.name === 'AbortError') {
+          throw new Error('Story generation timed out. Please try again.');
+        } else if (error.message.includes('Failed to fetch')) {
+          throw new Error('Unable to connect to story generation service. Please check your internet connection and try again.');
+        } else {
+          throw error;
+        }
       } else {
         throw new Error('An unexpected error occurred during story generation');
       }
@@ -178,10 +193,16 @@ class StoryService {
 
       console.log('📡 Making request to get user stories');
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${this.supabaseUrl}/functions/v1/get-user-stories`, {
         method: 'GET',
         headers,
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       console.log('📨 Get stories response status:', response.status);
 
@@ -197,7 +218,13 @@ class StoryService {
       return data.stories || [];
     } catch (error) {
       console.error('💥 Error fetching user stories:', error);
-      throw new Error('Failed to fetch stories. Please try again.');
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out while fetching stories. Please try again.');
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to story service. Please check your internet connection and try again.');
+      } else {
+        throw new Error('Failed to fetch stories. Please try again.');
+      }
     }
   }
 
@@ -211,11 +238,17 @@ class StoryService {
         'X-Demo-User-Id': 'demo-user-id'
       };
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${this.supabaseUrl}/functions/v1/update-story`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ storyId, ...updates }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       console.log('📨 Update story response status:', response.status);
 
@@ -228,7 +261,13 @@ class StoryService {
       console.log('✅ Story updated successfully');
     } catch (error) {
       console.error('💥 Error updating story:', error);
-      throw new Error('Failed to update story. Please try again.');
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out while updating story. Please try again.');
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to story service. Please check your internet connection and try again.');
+      } else {
+        throw new Error('Failed to update story. Please try again.');
+      }
     }
   }
 
@@ -237,6 +276,9 @@ class StoryService {
     console.log('🔍 Testing Supabase connection...');
     
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const response = await fetch(`${this.supabaseUrl}/rest/v1/`, {
         method: 'GET',
         headers: {
@@ -244,7 +286,10 @@ class StoryService {
           'Content-Type': 'application/json',
           'apikey': this.supabaseAnonKey,
         },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       console.log('🔍 Connection test response:', response.status);
       return response.status < 500; // Accept any non-server error as connection success

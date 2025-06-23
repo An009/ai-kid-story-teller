@@ -1,178 +1,144 @@
-import { corsHeaders } from '../_shared/cors.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-interface UpdateStoryRequest {
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-demo-user-id',
+  'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+}
+
+interface UpdateStoryParams {
   storyId: string;
   isFavorite?: boolean;
   incrementReadCount?: boolean;
 }
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-function extractUserIdFromJWT(token: string): string {
-  try {
-    // JWT tokens have three parts separated by dots: header.payload.signature
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid JWT format');
-    }
-
-    // Decode the payload (second part)
-    const payload = parts[1];
-    // Add padding if needed for base64 decoding
-    const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
-    const decodedPayload = atob(paddedPayload);
-    const payloadObj = JSON.parse(decodedPayload);
-
-    // Extract user ID from 'sub' claim
-    if (payloadObj.sub) {
-      return payloadObj.sub;
-    } else {
-      throw new Error('No sub claim found in JWT');
-    }
-  } catch (error) {
-    console.error('Error decoding JWT:', error);
-    // Fallback to demo user ID if JWT decoding fails
-    return '00000000-0000-0000-0000-000000000001';
-  }
-}
-
-Deno.serve(async (req: Request) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Validate request method
-    if (req.method !== 'PUT') {
+    console.log('📝 Update story function called')
+    
+    // Get request body
+    const params: UpdateStoryParams = await req.json()
+    console.log('📋 Update params:', params)
+
+    if (!params.storyId) {
       return new Response(
-        JSON.stringify({ error: 'Method not allowed' }),
-        {
-          status: 405,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        JSON.stringify({ 
+          success: false, 
+          error: 'Story ID is required' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
-      );
+      )
     }
 
-    // Check for demo user header first
-    const demoUserHeader = req.headers.get('X-Demo-User-Id');
-    let userId: string;
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    if (demoUserHeader === 'demo-user-id') {
-      // Use hardcoded demo user ID for database compatibility
-      userId = '00000000-0000-0000-0000-000000000001';
-    } else {
-      // Get authorization header for real users
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        return new Response(
-          JSON.stringify({ error: 'Authorization header required' }),
-          {
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+    // Get user ID from header or use demo user
+    const demoUserId = req.headers.get('x-demo-user-id')
+    const authHeader = req.headers.get('Authorization')
+    let userId = demoUserId || 'demo-user-id'
+
+    // If we have an auth header, try to get the real user
+    if (authHeader && !demoUserId) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) {
+        userId = user.id
       }
-
-      // Extract user ID from JWT token
-      const token = authHeader.replace('Bearer ', '');
-      userId = extractUserIdFromJWT(token);
     }
 
-    // Parse request body
-    const requestBody: UpdateStoryRequest = await req.json();
+    console.log('👤 Updating story for user ID:', userId)
 
-    if (!requestBody.storyId) {
-      return new Response(
-        JSON.stringify({ error: 'Story ID is required' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    const { createClient } = await import('npm:@supabase/supabase-js@2');
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    // Prepare update data
+    const updateData: any = {}
     
-    // Build update object
-    const updateData: any = {};
-    
-    if (typeof requestBody.isFavorite === 'boolean') {
-      updateData.is_favorite = requestBody.isFavorite;
+    if (params.isFavorite !== undefined) {
+      updateData.is_favorite = params.isFavorite
     }
-
-    if (requestBody.incrementReadCount) {
+    
+    if (params.incrementReadCount) {
       // First get current read count
       const { data: currentStory } = await supabase
         .from('stories')
         .select('read_count')
-        .eq('id', requestBody.storyId)
+        .eq('id', params.storyId)
         .eq('user_id', userId)
-        .single();
-
+        .single()
+      
       if (currentStory) {
-        updateData.read_count = (currentStory.read_count || 0) + 1;
+        updateData.read_count = (currentStory.read_count || 0) + 1
       }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No valid update fields provided' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     // Update the story
-    const { data: updatedStory, error } = await supabase
+    const { error } = await supabase
       .from('stories')
       .update(updateData)
-      .eq('id', requestBody.storyId)
+      .eq('id', params.storyId)
       .eq('user_id', userId)
-      .select()
-      .single();
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('❌ Database update error:', error)
       return new Response(
-        JSON.stringify({ error: 'Failed to update story' }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        JSON.stringify({ 
+          success: false, 
+          error: 'Failed to update story in database' 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
-      );
+      )
     }
 
-    if (!updatedStory) {
-      return new Response(
-        JSON.stringify({ error: 'Story not found or access denied' }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    console.log('✅ Story updated successfully')
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        story: updatedStory
+      JSON.stringify({ 
+        success: true, 
+        message: 'Story updated successfully' 
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    );
+    )
 
   } catch (error) {
-    console.error('Error in update-story function:', error);
-    
+    console.error('💥 Unexpected error:', error)
     return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      JSON.stringify({ 
+        success: false, 
+        error: 'An unexpected error occurred' 
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    );
+    )
   }
-});
+})

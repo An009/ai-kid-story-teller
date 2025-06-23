@@ -1,464 +1,242 @@
-import { corsHeaders } from '../_shared/cors.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-interface StoryRequest {
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-demo-user-id',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+interface StoryGenerationParams {
   theme: string;
   heroName: string;
   heroType: string;
   setting: string;
-  ageGroup: '4-6' | '7-9' | '10-12';
-  storyLength: 'short' | 'medium' | 'long';
+  ageGroup: string;
+  storyLength: string;
   mood?: string;
-  magicLevel?: 'low' | 'medium' | 'high';
+  magicLevel?: string;
 }
 
-interface StoryResponse {
-  title: string;
-  content: string;
-  moral: string;
-}
-
-const COHERE_API_KEY = Deno.env.get('COHERE_API_KEY');
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-// Demo user ID constant
-const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
-
-// Age-appropriate vocabulary and complexity settings
-const ageSettings = {
-  '4-6': {
-    vocabularyLevel: 'simple',
-    sentenceLength: 'short (5-8 words)',
-    concepts: 'basic emotions and actions',
-    wordCount: { short: 200, medium: 300, long: 400 },
-    instructions: 'Use very simple words, short sentences, and repetitive patterns. Include lots of sounds (whoosh, splash, giggle) and simple emotions.'
-  },
-  '7-9': {
-    vocabularyLevel: 'intermediate',
-    sentenceLength: 'medium (8-12 words)',
-    concepts: 'problem-solving and friendship',
-    wordCount: { short: 300, medium: 500, long: 700 },
-    instructions: 'Use slightly more complex vocabulary, varied sentence lengths, and introduce simple problem-solving scenarios.'
-  },
-  '10-12': {
-    vocabularyLevel: 'advanced',
-    sentenceLength: 'varied (8-15 words)',
-    concepts: 'complex emotions and moral reasoning',
-    wordCount: { short: 400, medium: 600, long: 900 },
-    instructions: 'Use richer vocabulary, complex sentence structures, and deeper character development with meaningful life lessons.'
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
-};
 
-const themePrompts = {
-  adventure: 'an exciting journey with challenges to overcome and discoveries to make',
-  friendship: 'the importance of kindness, understanding, and helping others',
-  magic: 'discovering special abilities and using them responsibly to help others',
-  dreams: 'pursuing goals with determination and never giving up',
-  mystery: 'solving puzzles through curiosity, observation, and teamwork',
-  kindness: 'how small acts of kindness create positive changes in the world'
-};
-
-const settingDescriptions = {
-  forest: 'an enchanted woodland with talking animals, magical trees, and hidden clearings filled with wonder',
-  ocean: 'an underwater kingdom with coral castles, friendly sea creatures, and mysterious depths',
-  mountain: 'magical peaks with crystal caves, wise mountain spirits, and breathtaking views',
-  castle: 'a magnificent royal palace with secret passages, grand ballrooms, and beautiful gardens',
-  space: 'the vast cosmos with twinkling stars, colorful planets, and friendly alien civilizations',
-  village: 'a cozy town with cobblestone streets, friendly neighbors, and charming shops'
-};
-
-function constructPrompt(request: StoryRequest): string {
-  const ageConfig = ageSettings[request.ageGroup];
-  const targetWordCount = ageConfig.wordCount[request.storyLength];
-  const themeDescription = themePrompts[request.theme as keyof typeof themePrompts] || request.theme;
-  const settingDescription = settingDescriptions[request.setting as keyof typeof settingDescriptions] || request.setting;
-  
-  return `Write a ${request.storyLength} children's story for ages ${request.ageGroup} (approximately ${targetWordCount} words).
-
-STORY REQUIREMENTS:
-- Main character: ${request.heroName}, a ${request.heroType}
-- Setting: ${settingDescription}
-- Theme: ${themeDescription}
-- Mood: ${request.mood || 'happy and uplifting'}
-- Magic level: ${request.magicLevel || 'medium'} magical elements
-- Age-appropriate content: ${ageConfig.instructions}
-
-STRUCTURE REQUIREMENTS:
-1. Create a compelling title that includes the character's name
-2. Write a complete story with clear beginning, middle, and end
-3. Include 2-3 supporting characters that help drive the plot
-4. Use dialogue to bring characters to life
-5. Include sensory details (what characters see, hear, feel)
-6. Add gentle humor and whimsical elements appropriate for children
-7. Ensure the story teaches the theme naturally through the plot
-8. End with a clear, positive resolution
-
-LANGUAGE REQUIREMENTS:
-- Vocabulary: ${ageConfig.vocabularyLevel}
-- Sentence length: ${ageConfig.sentenceLength}
-- Include onomatopoeia (sound words like "whoosh," "splash," "giggle")
-- Use active voice and engaging descriptions
-- Create vivid imagery that sparks imagination
-
-FORMAT:
-Return the response as a JSON object with this exact structure:
-{
-  "title": "Story title here",
-  "content": "Complete story content with proper paragraph breaks",
-  "moral": "The key lesson or moral of the story"
-}
-
-The story should be engaging, age-appropriate, and inspire wonder while teaching valuable life lessons.`;
-}
-
-async function generateStoryWithCohere(prompt: string): Promise<StoryResponse> {
   try {
-    const response = await fetch('https://api.cohere.ai/v1/generate', {
+    console.log('🎯 Generate story function called')
+    
+    // Get request body
+    const params: StoryGenerationParams = await req.json()
+    console.log('📋 Request params:', params)
+
+    // Validate required parameters
+    const requiredFields = ['theme', 'heroName', 'heroType', 'setting', 'ageGroup', 'storyLength']
+    const missingFields = requiredFields.filter(field => !params[field as keyof StoryGenerationParams])
+    
+    if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Missing required fields: ${missingFields.join(', ')}` 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Get user ID from header or use demo user
+    const demoUserId = req.headers.get('x-demo-user-id')
+    const authHeader = req.headers.get('Authorization')
+    let userId = demoUserId || 'demo-user-id'
+
+    // If we have an auth header, try to get the real user
+    if (authHeader && !demoUserId) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) {
+        userId = user.id
+      }
+    }
+
+    console.log('👤 Using user ID:', userId)
+
+    // Generate story using Cohere API
+    const cohereApiKey = Deno.env.get('COHERE_API_KEY')
+    if (!cohereApiKey) {
+      console.error('❌ Missing COHERE_API_KEY')
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Story generation service not configured' 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Create story prompt
+    const prompt = `Write a ${params.storyLength} children's story for ages ${params.ageGroup} with the following details:
+- Theme: ${params.theme}
+- Hero: ${params.heroName} (a ${params.heroType})
+- Setting: ${params.setting}
+- Mood: ${params.mood || 'happy'}
+- Magic level: ${params.magicLevel || 'medium'}
+
+The story should be engaging, age-appropriate, and include a positive moral lesson. Format the response as a complete story with a clear beginning, middle, and end.`
+
+    console.log('🤖 Generating story with Cohere...')
+
+    // Call Cohere API
+    const cohereResponse = await fetch('https://api.cohere.ai/v1/generate', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${COHERE_API_KEY}`,
+        'Authorization': `Bearer ${cohereApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'command',
         prompt: prompt,
-        max_tokens: 2000,
-        temperature: 0.8,
+        max_tokens: params.storyLength === 'short' ? 500 : params.storyLength === 'medium' ? 800 : 1200,
+        temperature: 0.7,
         k: 0,
         stop_sequences: [],
         return_likelihoods: 'NONE'
       }),
-    });
+    })
 
-    if (!response.ok) {
-      throw new Error(`Cohere API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const generatedText = data.generations[0].text.trim();
-    
-    // Try to parse as JSON first
-    try {
-      const parsedStory = JSON.parse(generatedText);
-      if (parsedStory.title && parsedStory.content && parsedStory.moral) {
-        return parsedStory;
-      }
-    } catch {
-      // If JSON parsing fails, extract content manually
-      console.log('JSON parsing failed, extracting content manually');
-    }
-    
-    // Fallback: extract title, content, and moral from text
-    const lines = generatedText.split('\n').filter(line => line.trim());
-    const title = lines[0]?.replace(/^["']|["']$/g, '') || 'A Magical Story';
-    const content = lines.slice(1).join('\n\n').trim() || generatedText;
-    const moral = 'Every adventure teaches us something valuable about ourselves and others.';
-    
-    return { title, content, moral };
-  } catch (error) {
-    console.error('Error generating story with Cohere:', error);
-    throw new Error('Failed to generate story. Please try again.');
-  }
-}
-
-function extractUserIdFromJWT(token: string): string {
-  try {
-    // JWT tokens have three parts separated by dots: header.payload.signature
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid JWT format');
-    }
-
-    // Decode the payload (second part)
-    const payload = parts[1];
-    // Add padding if needed for base64 decoding
-    const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
-    const decodedPayload = atob(paddedPayload);
-    const payloadObj = JSON.parse(decodedPayload);
-
-    // Extract user ID from 'sub' claim
-    if (payloadObj.sub) {
-      return payloadObj.sub;
-    } else {
-      throw new Error('No sub claim found in JWT');
-    }
-  } catch (error) {
-    console.error('Error decoding JWT:', error);
-    // Fallback to demo user ID if JWT decoding fails
-    return DEMO_USER_ID;
-  }
-}
-
-async function saveStoryToDatabase(story: StoryResponse, request: StoryRequest, userId: string) {
-  try {
-    const { createClient } = await import('npm:@supabase/supabase-js@2');
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    
-    const { data, error } = await supabase
-      .from('stories')
-      .insert({
-        user_id: userId,
-        title: story.title,
-        content: story.content,
-        theme: request.theme,
-        hero_name: request.heroName,
-        hero_type: request.heroType,
-        setting: request.setting,
-        age_group: request.ageGroup,
-        story_length: request.storyLength,
-        mood: request.mood || 'happy',
-        magic_level: request.magicLevel || 'medium'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Database error:', error);
-      throw new Error('Failed to save story to database');
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error saving story:', error);
-    throw error;
-  }
-}
-
-function generateMockStoryData(story: StoryResponse, request: StoryRequest) {
-  // Generate a mock UUID for demo stories
-  const mockId = crypto.randomUUID();
-  const now = new Date().toISOString();
-  
-  return {
-    id: mockId,
-    user_id: DEMO_USER_ID,
-    title: story.title,
-    content: story.content,
-    theme: request.theme,
-    hero_name: request.heroName,
-    hero_type: request.heroType,
-    setting: request.setting,
-    age_group: request.ageGroup,
-    story_length: request.storyLength,
-    mood: request.mood || 'happy',
-    magic_level: request.magicLevel || 'medium',
-    created_at: now,
-    updated_at: now,
-    is_favorite: false,
-    read_count: 0
-  };
-}
-
-Deno.serve(async (req: Request) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
-  }
-
-  try {
-    console.log('Edge function called with method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-
-    // Validate request method
-    if (req.method !== 'POST') {
-      console.log('Invalid method:', req.method);
-      return new Response(
-        JSON.stringify({ error: 'Method not allowed' }),
-        {
-          status: 405,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // Check for required environment variables
-    console.log('Checking environment variables...');
-    console.log('COHERE_API_KEY exists:', !!COHERE_API_KEY);
-    console.log('SUPABASE_URL exists:', !!SUPABASE_URL);
-    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!SUPABASE_SERVICE_ROLE_KEY);
-
-    if (!COHERE_API_KEY) {
-      console.error('COHERE_API_KEY not found');
+    if (!cohereResponse.ok) {
+      console.error('❌ Cohere API error:', cohereResponse.status)
+      const errorText = await cohereResponse.text()
+      console.error('❌ Cohere error details:', errorText)
+      
       return new Response(
         JSON.stringify({ 
-          error: 'Cohere API key not configured',
-          message: 'The story generation service is not properly configured. Please contact support.'
+          success: false, 
+          error: 'Failed to generate story content' 
         }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
-      );
+      )
     }
 
-    // Check for demo user header first
-    const demoUserHeader = req.headers.get('X-Demo-User-Id');
-    let userId: string;
-    let isDemoUser = false;
+    const cohereData = await cohereResponse.json()
+    const storyContent = cohereData.generations[0].text.trim()
 
-    console.log('Demo user header:', demoUserHeader);
+    console.log('✅ Story generated successfully')
 
-    if (demoUserHeader === 'demo-user-id') {
-      // Use hardcoded demo user ID
-      userId = DEMO_USER_ID;
-      isDemoUser = true;
-      console.log('Using demo user ID:', userId);
-    } else {
-      // Get authorization header for real users
-      const authHeader = req.headers.get('Authorization');
-      console.log('Auth header exists:', !!authHeader);
-      
-      if (!authHeader) {
-        console.error('No authorization header found');
-        return new Response(
-          JSON.stringify({ error: 'Authorization header required' }),
-          {
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
+    // Create story title
+    const title = `${params.heroName} and the ${params.theme.charAt(0).toUpperCase() + params.theme.slice(1)} Adventure`
 
-      // Extract user ID from JWT token
-      const token = authHeader.replace('Bearer ', '');
-      userId = extractUserIdFromJWT(token);
-      
-      // Check if this is actually a demo user (fallback case)
-      if (userId === DEMO_USER_ID) {
-        isDemoUser = true;
-      }
-      
-      console.log('Extracted user ID from JWT:', userId);
-      console.log('Is demo user:', isDemoUser);
+    // Generate a simple moral based on theme
+    const morals: Record<string, string> = {
+      'friendship': 'True friendship means being there for each other through good times and bad.',
+      'adventure': 'Every adventure teaches us something new about ourselves and the world.',
+      'magic': 'The greatest magic comes from believing in yourself and helping others.',
+      'animals': 'All creatures deserve our kindness and respect.',
+      'family': 'Family love gives us strength and courage to face any challenge.',
+      'school': 'Learning new things helps us grow and discover our talents.',
+      'nature': 'Taking care of our environment is taking care of our future.',
+      'space': 'The universe is vast and full of wonders waiting to be discovered.',
+      'underwater': 'Even in the deepest waters, courage and friendship light the way.',
+      'fairy tale': 'Kindness and courage can overcome any obstacle.'
     }
 
-    // Parse request body
-    let requestBody: StoryRequest;
-    try {
-      const bodyText = await req.text();
-      console.log('Request body:', bodyText);
-      requestBody = JSON.parse(bodyText);
-    } catch (error) {
-      console.error('Failed to parse request body:', error);
+    const moral = morals[params.theme] || 'Every challenge is an opportunity to grow and learn.'
+
+    // Save story to database
+    const storyData = {
+      user_id: userId,
+      title: title,
+      content: storyContent,
+      theme: params.theme,
+      hero_name: params.heroName,
+      hero_type: params.heroType,
+      setting: params.setting,
+      age_group: params.ageGroup,
+      story_length: params.storyLength,
+      mood: params.mood || 'happy',
+      magic_level: params.magicLevel || 'medium',
+      is_favorite: false,
+      read_count: 0
+    }
+
+    console.log('💾 Saving story to database...')
+
+    const { data: savedStory, error: saveError } = await supabase
+      .from('stories')
+      .insert(storyData)
+      .select()
+      .single()
+
+    if (saveError) {
+      console.error('❌ Database save error:', saveError)
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        JSON.stringify({ 
+          success: false, 
+          error: 'Failed to save story to database' 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
-      );
+      )
     }
 
-    console.log('Parsed request:', requestBody);
-
-    // Validate required fields
-    const requiredFields = ['theme', 'heroName', 'heroType', 'setting', 'ageGroup', 'storyLength'];
-    for (const field of requiredFields) {
-      if (!requestBody[field as keyof StoryRequest]) {
-        console.error(`Missing required field: ${field}`);
-        return new Response(
-          JSON.stringify({ error: `Missing required field: ${field}` }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
-    }
-
-    // Validate enum values
-    if (!['4-6', '7-9', '10-12'].includes(requestBody.ageGroup)) {
-      console.error('Invalid age group:', requestBody.ageGroup);
-      return new Response(
-        JSON.stringify({ error: 'Invalid age group' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    if (!['short', 'medium', 'long'].includes(requestBody.storyLength)) {
-      console.error('Invalid story length:', requestBody.storyLength);
-      return new Response(
-        JSON.stringify({ error: 'Invalid story length' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    console.log('Starting story generation...');
-
-    // Generate story prompt
-    const prompt = constructPrompt(requestBody);
-    console.log('Generated prompt length:', prompt.length);
-
-    // Generate story using Cohere API
-    const story = await generateStoryWithCohere(prompt);
-    console.log('Story generated successfully');
-
-    let savedStory;
-
-    if (isDemoUser) {
-      // For demo users, don't save to database - just create mock data
-      console.log('Demo user detected, skipping database save');
-      savedStory = generateMockStoryData(story, requestBody);
-      console.log('Generated mock story data with ID:', savedStory.id);
-    } else {
-      // For real users, save to database
-      console.log('Real user detected, saving to database');
-      savedStory = await saveStoryToDatabase(story, requestBody, userId);
-      console.log('Story saved to database with ID:', savedStory.id);
-    }
+    console.log('✅ Story saved to database with ID:', savedStory.id)
 
     // Return the generated story
     const response = {
       success: true,
       story: {
         id: savedStory.id,
-        title: story.title,
-        content: story.content,
-        moral: story.moral,
-        theme: requestBody.theme,
-        heroName: requestBody.heroName,
-        heroType: requestBody.heroType,
-        setting: requestBody.setting,
-        ageGroup: requestBody.ageGroup,
-        storyLength: requestBody.storyLength,
-        mood: requestBody.mood || 'happy',
-        magicLevel: requestBody.magicLevel || 'medium',
+        title: title,
+        content: storyContent,
+        moral: moral,
+        theme: params.theme,
+        heroName: params.heroName,
+        heroType: params.heroType,
+        setting: params.setting,
+        ageGroup: params.ageGroup,
+        storyLength: params.storyLength,
+        mood: params.mood || 'happy',
+        magicLevel: params.magicLevel || 'medium',
         createdAt: savedStory.created_at
       }
-    };
-
-    console.log('Returning successful response');
+    }
 
     return new Response(
       JSON.stringify(response),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    );
+    )
 
   } catch (error) {
-    console.error('Error in generate-story function:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
+    console.error('💥 Unexpected error:', error)
     return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      JSON.stringify({ 
+        success: false, 
+        error: 'An unexpected error occurred' 
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    );
+    )
   }
-});
+})
