@@ -9,6 +9,34 @@ interface UpdateStoryRequest {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+function extractUserIdFromJWT(token: string): string {
+  try {
+    // JWT tokens have three parts separated by dots: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
+    }
+
+    // Decode the payload (second part)
+    const payload = parts[1];
+    // Add padding if needed for base64 decoding
+    const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+    const decodedPayload = atob(paddedPayload);
+    const payloadObj = JSON.parse(decodedPayload);
+
+    // Extract user ID from 'sub' claim
+    if (payloadObj.sub) {
+      return payloadObj.sub;
+    } else {
+      throw new Error('No sub claim found in JWT');
+    }
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    // Fallback to demo user ID if JWT decoding fails
+    return '00000000-0000-0000-0000-000000000001';
+  }
+}
+
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -52,7 +80,7 @@ Deno.serve(async (req: Request) => {
 
       // Extract user ID from JWT token
       const token = authHeader.replace('Bearer ', '');
-      userId = token; // In a real implementation, decode and verify the JWT
+      userId = extractUserIdFromJWT(token);
     }
 
     // Parse request body
