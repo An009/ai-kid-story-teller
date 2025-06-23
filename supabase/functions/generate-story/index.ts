@@ -21,6 +21,9 @@ const COHERE_API_KEY = Deno.env.get('COHERE_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+// Demo user ID constant
+const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
+
 // Age-appropriate vocabulary and complexity settings
 const ageSettings = {
   '4-6': {
@@ -182,7 +185,7 @@ function extractUserIdFromJWT(token: string): string {
   } catch (error) {
     console.error('Error decoding JWT:', error);
     // Fallback to demo user ID if JWT decoding fails
-    return '00000000-0000-0000-0000-000000000001';
+    return DEMO_USER_ID;
   }
 }
 
@@ -219,6 +222,31 @@ async function saveStoryToDatabase(story: StoryResponse, request: StoryRequest, 
     console.error('Error saving story:', error);
     throw error;
   }
+}
+
+function generateMockStoryData(story: StoryResponse, request: StoryRequest) {
+  // Generate a mock UUID for demo stories
+  const mockId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  
+  return {
+    id: mockId,
+    user_id: DEMO_USER_ID,
+    title: story.title,
+    content: story.content,
+    theme: request.theme,
+    hero_name: request.heroName,
+    hero_type: request.heroType,
+    setting: request.setting,
+    age_group: request.ageGroup,
+    story_length: request.storyLength,
+    mood: request.mood || 'happy',
+    magic_level: request.magicLevel || 'medium',
+    created_at: now,
+    updated_at: now,
+    is_favorite: false,
+    read_count: 0
+  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -269,12 +297,14 @@ Deno.serve(async (req: Request) => {
     // Check for demo user header first
     const demoUserHeader = req.headers.get('X-Demo-User-Id');
     let userId: string;
+    let isDemoUser = false;
 
     console.log('Demo user header:', demoUserHeader);
 
     if (demoUserHeader === 'demo-user-id') {
-      // Use hardcoded demo user ID for database compatibility
-      userId = '00000000-0000-0000-0000-000000000001';
+      // Use hardcoded demo user ID
+      userId = DEMO_USER_ID;
+      isDemoUser = true;
       console.log('Using demo user ID:', userId);
     } else {
       // Get authorization header for real users
@@ -295,7 +325,14 @@ Deno.serve(async (req: Request) => {
       // Extract user ID from JWT token
       const token = authHeader.replace('Bearer ', '');
       userId = extractUserIdFromJWT(token);
+      
+      // Check if this is actually a demo user (fallback case)
+      if (userId === DEMO_USER_ID) {
+        isDemoUser = true;
+      }
+      
       console.log('Extracted user ID from JWT:', userId);
+      console.log('Is demo user:', isDemoUser);
     }
 
     // Parse request body
@@ -365,9 +402,19 @@ Deno.serve(async (req: Request) => {
     const story = await generateStoryWithCohere(prompt);
     console.log('Story generated successfully');
 
-    // Save story to database
-    const savedStory = await saveStoryToDatabase(story, requestBody, userId);
-    console.log('Story saved to database with ID:', savedStory.id);
+    let savedStory;
+
+    if (isDemoUser) {
+      // For demo users, don't save to database - just create mock data
+      console.log('Demo user detected, skipping database save');
+      savedStory = generateMockStoryData(story, requestBody);
+      console.log('Generated mock story data with ID:', savedStory.id);
+    } else {
+      // For real users, save to database
+      console.log('Real user detected, saving to database');
+      savedStory = await saveStoryToDatabase(story, requestBody, userId);
+      console.log('Story saved to database with ID:', savedStory.id);
+    }
 
     // Return the generated story
     const response = {
