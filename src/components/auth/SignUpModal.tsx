@@ -112,7 +112,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <>
       {/* Modal Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-49" 
@@ -120,11 +120,11 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
         aria-hidden="true"
       />
       
-      {/* Modal Container - Centered with Flexbox */}
-      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      {/* Modal Container */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div className={`${
           highContrast ? 'bg-gray-900 border-white' : 'bg-white/90 border-white/30'
-        } backdrop-blur-sm rounded-3xl p-6 sm:p-8 border shadow-xl w-full max-w-md mx-auto transform transition-all duration-300 relative z-50`}>
+        } backdrop-blur-sm rounded-3xl p-6 sm:p-8 border shadow-xl w-full max-w-md mx-auto transform transition-all duration-300`}>
           
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -360,7 +360,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
           </form>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

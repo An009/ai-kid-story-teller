@@ -21,7 +21,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   onClose
 }) => {
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <>
       {/* Modal Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-49" 
@@ -29,11 +29,11 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
         aria-hidden="true"
       />
       
-      {/* Modal Container - Centered with Flexbox */}
-      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      {/* Modal Container */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div className={`${
           highContrast ? 'bg-gray-900 border-white' : 'bg-white border-gray-200'
-        } rounded-2xl p-6 border shadow-2xl w-full max-w-md mx-auto relative z-50`}>
+        } rounded-2xl p-6 border shadow-2xl w-full max-w-md mx-auto`}>
           <div className="flex items-center justify-between mb-6">
             <h3 className={`text-xl sm:text-2xl font-bold ${
               highContrast ? 'text-white' : 'text-gray-800'
@@ -174,7 +174,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
