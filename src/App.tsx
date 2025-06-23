@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Library, Settings, Volume2, VolumeX } from 'lucide-react';
+import { AuthProvider } from './contexts/AuthContext';
+import AuthButton from './components/auth/AuthButton';
 import StoryGenerator from './components/StoryGenerator';
 import StoryLibrary from './components/StoryLibrary';
 import StoryDisplay from './components/StoryDisplay';
@@ -8,7 +10,7 @@ import { CharacterProvider, CharacterIntegration } from './components/Character3
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { Story } from './types/Story';
 
-function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState<'generator' | 'library' | 'story'>('generator');
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [savedStories, setSavedStories] = useState<Story[]>([]);
@@ -168,6 +170,8 @@ function App() {
                 >
                   <Settings className="w-5 h-5" />
                 </button>
+
+                <AuthButton highContrast={highContrast} />
               </div>
             </div>
           </div>
@@ -258,6 +262,14 @@ function App() {
         </main>
       </div>
     </CharacterProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

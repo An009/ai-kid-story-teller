@@ -53,7 +53,7 @@ class StoryService {
     }
   }
 
-  async generateStory(params: StoryGenerationParams): Promise<GeneratedStory> {
+  async generateStory(params: StoryGenerationParams, userToken?: string): Promise<GeneratedStory> {
     console.log('🎯 Starting story generation with params:', params);
     
     try {
@@ -68,11 +68,20 @@ class StoryService {
       console.log('✅ Parameters validated successfully');
 
       // Prepare request headers
-      const headers = {
-        'Authorization': `Bearer ${this.supabaseAnonKey}`,
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'X-Demo-User-Id': '00000000-0000-4000-8000-000000000000' // Valid UUID format for demo user
+        'apikey': this.supabaseAnonKey
       };
+
+      // Add authorization header if user is authenticated
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+        console.log('🔐 Using authenticated user token');
+      } else {
+        headers['Authorization'] = `Bearer ${this.supabaseAnonKey}`;
+        headers['X-Demo-User-Id'] = '00000000-0000-4000-8000-000000000000';
+        console.log('👤 Using demo user for unauthenticated request');
+      }
 
       const apiUrl = `${this.supabaseUrl}/functions/v1/generate-story`;
       console.log('📡 Making API request to:', apiUrl);
@@ -81,7 +90,7 @@ class StoryService {
 
       // Add timeout and better error handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -181,15 +190,24 @@ class StoryService {
     }
   }
 
-  async getUserStories(): Promise<any[]> {
+  async getUserStories(userToken?: string): Promise<any[]> {
     console.log('📚 Fetching user stories...');
     
     try {
-      const headers = {
-        'Authorization': `Bearer ${this.supabaseAnonKey}`,
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'X-Demo-User-Id': '00000000-0000-4000-8000-000000000000'
+        'apikey': this.supabaseAnonKey
       };
+
+      // Add authorization header if user is authenticated
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+        console.log('🔐 Using authenticated user token for stories');
+      } else {
+        headers['Authorization'] = `Bearer ${this.supabaseAnonKey}`;
+        headers['X-Demo-User-Id'] = '00000000-0000-4000-8000-000000000000';
+        console.log('👤 Using demo user for unauthenticated stories request');
+      }
 
       console.log('📡 Making request to get user stories');
 
@@ -228,15 +246,24 @@ class StoryService {
     }
   }
 
-  async updateStory(storyId: string, updates: { isFavorite?: boolean; incrementReadCount?: boolean }): Promise<void> {
+  async updateStory(storyId: string, updates: { isFavorite?: boolean; incrementReadCount?: boolean }, userToken?: string): Promise<void> {
     console.log('📝 Updating story:', storyId, updates);
     
     try {
-      const headers = {
-        'Authorization': `Bearer ${this.supabaseAnonKey}`,
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'X-Demo-User-Id': '00000000-0000-4000-8000-000000000000'
+        'apikey': this.supabaseAnonKey
       };
+
+      // Add authorization header if user is authenticated
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+        console.log('🔐 Using authenticated user token for update');
+      } else {
+        headers['Authorization'] = `Bearer ${this.supabaseAnonKey}`;
+        headers['X-Demo-User-Id'] = '00000000-0000-4000-8000-000000000000';
+        console.log('👤 Using demo user for unauthenticated update');
+      }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
