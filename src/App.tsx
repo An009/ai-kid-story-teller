@@ -5,6 +5,7 @@ import StoryLibrary from './components/StoryLibrary';
 import StoryDisplay from './components/StoryDisplay';
 import AccessibilityPanel from './components/AccessibilityPanel';
 import { CharacterProvider, CharacterIntegration } from './components/Character3D';
+import { AnimatedBackground } from './components/AnimatedBackground';
 import { Story } from './types/Story';
 
 function App() {
@@ -88,21 +89,35 @@ function App() {
     }
   };
 
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   return (
     <CharacterProvider 
       initialConfig={{
         enableInteractions: true,
         enableSounds: audioEnabled,
-        reducedMotion: false,
+        reducedMotion: prefersReducedMotion,
         scale: 1,
         animationSpeed: 1
       }}
     >
-      <div className={`min-h-screen transition-all duration-300 ${
-        highContrast 
-          ? 'bg-black text-white' 
-          : 'bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100'
-      } ${textSize === 'small' ? 'text-sm' : textSize === 'large' ? 'text-lg' : 'text-base'}`}>
+      <div className={`min-h-screen transition-all duration-300 relative ${
+        textSize === 'small' ? 'text-sm' : textSize === 'large' ? 'text-lg' : 'text-base'
+      }`}>
+        
+        {/* Animated Background */}
+        <AnimatedBackground
+          particleCount={prefersReducedMotion ? 0 : 65}
+          enableParticles={!prefersReducedMotion && !highContrast}
+          blurIntensity={highContrast ? 1 : 2.5}
+          className={highContrast ? 'high-contrast' : ''}
+        />
+        
+        {/* High contrast overlay when needed */}
+        {highContrast && (
+          <div className="fixed inset-0 bg-black/70 z-0" />
+        )}
         
         {/* 3D Character */}
         <CharacterIntegration
@@ -117,7 +132,7 @@ function App() {
         {/* Header */}
         <header className={`${
           highContrast ? 'bg-gray-900 border-white' : 'bg-white/80 border-white/20'
-        } backdrop-blur-sm border-b sticky top-0 z-10`}>
+        } backdrop-blur-sm border-b sticky top-0 z-10 relative`}>
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -161,7 +176,7 @@ function App() {
         {/* Navigation */}
         <nav className={`${
           highContrast ? 'bg-gray-800' : 'bg-white/60'
-        } backdrop-blur-sm border-b border-white/20`}>
+        } backdrop-blur-sm border-b border-white/20 relative z-10`}>
           <div className="container mx-auto px-4 py-3">
             <div className="flex justify-center space-x-4">
               <button
@@ -213,7 +228,7 @@ function App() {
         )}
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 relative z-10">
           {currentView === 'generator' && (
             <StoryGenerator 
               onStoryGenerated={handleStoryGenerated}
