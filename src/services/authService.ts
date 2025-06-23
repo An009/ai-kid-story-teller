@@ -14,19 +14,51 @@ export interface AuthUser {
 
 class AuthService {
   private supabase;
+  private isInitialized: boolean = false;
 
   constructor() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Missing Supabase environment variables');
+      console.error('❌ Missing Supabase environment variables:', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseAnonKey
+      });
+      this.isInitialized = false;
+      // Create a dummy client to prevent runtime errors
+      this.supabase = null;
+      return;
     }
     
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    try {
+      this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+      this.isInitialized = true;
+      console.log('✅ Supabase client initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize Supabase client:', error);
+      this.isInitialized = false;
+      this.supabase = null;
+    }
+  }
+
+  private checkInitialization(): boolean {
+    if (!this.isInitialized || !this.supabase) {
+      console.error('❌ Supabase client not initialized. Please check your environment variables.');
+      return false;
+    }
+    return true;
   }
 
   async signIn(email: string, password: string): Promise<AuthResponse> {
+    if (!this.checkInitialization()) {
+      return {
+        user: null,
+        error: 'Authentication service is not properly configured. Please check your environment variables.',
+        success: false
+      };
+    }
+
     try {
       console.log('🔐 Attempting sign in for:', email);
       
@@ -61,6 +93,14 @@ class AuthService {
   }
 
   async signUp(email: string, password: string): Promise<AuthResponse> {
+    if (!this.checkInitialization()) {
+      return {
+        user: null,
+        error: 'Authentication service is not properly configured. Please check your environment variables.',
+        success: false
+      };
+    }
+
     try {
       console.log('📝 Attempting sign up for:', email);
       
@@ -98,6 +138,10 @@ class AuthService {
   }
 
   async signOut(): Promise<void> {
+    if (!this.checkInitialization()) {
+      throw new Error('Authentication service is not properly configured.');
+    }
+
     try {
       console.log('🚪 Signing out user');
       const { error } = await this.supabase.auth.signOut();
@@ -115,6 +159,12 @@ class AuthService {
   }
 
   onAuthStateChange(callback: (user: User | null) => void) {
+    if (!this.checkInitialization()) {
+      console.error('❌ Cannot set up auth state listener - service not initialized');
+      // Return a no-op unsubscribe function
+      return () => {};
+    }
+
     console.log('👂 Setting up auth state listener');
     
     const { data: { subscription } } = this.supabase.auth.onAuthStateChange(
@@ -131,6 +181,11 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User | null> {
+    if (!this.checkInitialization()) {
+      console.error('❌ Cannot get current user - service not initialized');
+      return null;
+    }
+
     try {
       const { data: { user }, error } = await this.supabase.auth.getUser();
       
@@ -147,6 +202,13 @@ class AuthService {
   }
 
   async resetPassword(email: string): Promise<{ success: boolean; error: string | null }> {
+    if (!this.checkInitialization()) {
+      return {
+        success: false,
+        error: 'Authentication service is not properly configured. Please check your environment variables.'
+      };
+    }
+
     try {
       console.log('🔄 Sending password reset for:', email);
       
@@ -197,12 +259,21 @@ class AuthService {
 
   // Test connection method
   async testConnection(): Promise<boolean> {
+    if (!this.checkInitialization()) {
+      return false;
+    }
+
     try {
       const { data, error } = await this.supabase.auth.getSession();
       return !error;
     } catch {
       return false;
     }
+  }
+
+  // Method to check if service is properly initialized
+  isServiceReady(): boolean {
+    return this.isInitialized;
   }
 }
 
