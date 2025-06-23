@@ -4,6 +4,8 @@
   user-select: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
+  z-index: 15;
+  position: relative;
 }
 
 .character-3d.disabled {
@@ -500,18 +502,22 @@
 /* Position-specific styles */
 .character-3d.homepage-center {
   animation: entranceFloat 2s ease-out;
+  z-index: 15;
 }
 
 .character-3d.sidebar-right {
   animation: sidebarPeek 1s ease-out;
+  z-index: 15;
 }
 
 .character-3d.corner-bottom-right {
   animation: cornerWave 3s ease-in-out infinite;
+  z-index: 15;
 }
 
 .character-3d.guide-top-left {
   animation: guidePoint 4s ease-in-out infinite;
+  z-index: 15;
 }
 
 /* Keyframe Animations */
@@ -659,17 +665,20 @@
   
   .character-3d.homepage-center {
     transform: translate(-50%, -50%) scale(0.8);
+    z-index: 15;
   }
   
   .character-3d.sidebar-right {
     transform: scale(0.6);
     right: 10px;
+    z-index: 15;
   }
   
   .character-3d.corner-bottom-right {
     transform: scale(0.5);
     bottom: 10px;
     right: 10px;
+    z-index: 15;
   }
 }
 
@@ -681,6 +690,7 @@
   
   .character-3d.homepage-center {
     transform: translate(-50%, -50%) scale(0.7);
+    z-index: 15;
   }
 }
 

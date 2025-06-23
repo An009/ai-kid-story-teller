@@ -73,33 +73,33 @@ const Character3D: React.FC<Character3DProps> = ({
         top: '50%',
         left: '50%',
         transform: `translate(-50%, -50%) scale(${scale})`,
-        zIndex: 10
+        zIndex: 15
       },
       'sidebar-right': {
         position: 'fixed' as const,
         top: '20%',
         right: '20px',
         transform: `scale(${scale * 0.8})`,
-        zIndex: 5
+        zIndex: 15
       },
       'corner-bottom-right': {
         position: 'fixed' as const,
         bottom: '20px',
         right: '20px',
         transform: `scale(${scale * 0.6})`,
-        zIndex: 5
+        zIndex: 15
       },
       'guide-top-left': {
         position: 'fixed' as const,
         top: '20px',
         left: '20px',
         transform: `scale(${scale * 0.7})`,
-        zIndex: 5
+        zIndex: 15
       },
       'inline': {
         position: 'relative' as const,
         transform: `scale(${scale})`,
-        zIndex: 1
+        zIndex: 15
       }
     };
 

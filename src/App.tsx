@@ -108,7 +108,7 @@ function AppContent() {
         textSize === 'small' ? 'text-sm' : textSize === 'large' ? 'text-lg' : 'text-base'
       }`}>
         
-        {/* Animated Background */}
+        {/* Animated Background - Base Layer */}
         <AnimatedBackground
           particleCount={prefersReducedMotion ? 0 : 65}
           enableParticles={!prefersReducedMotion && !highContrast}
@@ -116,22 +116,24 @@ function AppContent() {
           className={highContrast ? 'high-contrast' : ''}
         />
         
-        {/* High contrast overlay when needed */}
+        {/* High contrast overlay when needed - Base Layer */}
         {highContrast && (
           <div className="fixed inset-0 bg-black/70 z-0" />
         )}
         
-        {/* 3D Character */}
-        <CharacterIntegration
-          position={getCharacterPosition()}
-          state={getCharacterState()}
-          onInteraction={() => {
-            // Character interaction feedback
-            console.log('Character interaction!');
-          }}
-        />
+        {/* 3D Character - Interactive Character Layer */}
+        <div className="relative z-15">
+          <CharacterIntegration
+            position={getCharacterPosition()}
+            state={getCharacterState()}
+            onInteraction={() => {
+              // Character interaction feedback
+              console.log('Character interaction!');
+            }}
+          />
+        </div>
 
-        {/* Header */}
+        {/* Header - Navigation Layer */}
         <header className={`${
           highContrast ? 'bg-gray-900 border-white' : 'bg-white/80 border-white/20'
         } backdrop-blur-sm border-b sticky top-0 z-10 relative`}>
@@ -177,7 +179,7 @@ function AppContent() {
           </div>
         </header>
 
-        {/* Navigation */}
+        {/* Navigation - Navigation Layer */}
         <nav className={`${
           highContrast ? 'bg-gray-800' : 'bg-white/60'
         } backdrop-blur-sm border-b border-white/20 relative z-10`}>
@@ -218,7 +220,7 @@ function AppContent() {
           </div>
         </nav>
 
-        {/* Accessibility Panel */}
+        {/* Accessibility Panel - Modal Layer */}
         {isAccessibilityOpen && (
           <AccessibilityPanel
             highContrast={highContrast}
@@ -231,8 +233,8 @@ function AppContent() {
           />
         )}
 
-        {/* Main Content */}
-        <main className="container mx-auto px-4 py-8 relative z-10">
+        {/* Main Content - Base Layer */}
+        <main className="container mx-auto px-4 py-8 relative z-1">
           {currentView === 'generator' && (
             <StoryGenerator 
               onStoryGenerated={handleStoryGenerated}
