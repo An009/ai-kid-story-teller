@@ -117,7 +117,7 @@ async function generateStoryWithCohere(prompt: string): Promise<StoryResponse> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'command-xlarge-nightly',
+        model: 'command',
         prompt: prompt,
         max_tokens: 2000,
         temperature: 0.8,
