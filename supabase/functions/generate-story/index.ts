@@ -1,6 +1,3 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-demo-user-id',
@@ -18,7 +15,7 @@ interface StoryGenerationParams {
   magicLevel?: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -55,10 +52,10 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get user ID from header or use demo user
+    // Get user ID from header or use null for anonymous users
     const demoUserId = req.headers.get('x-demo-user-id')
     const authHeader = req.headers.get('Authorization')
-    let userId = demoUserId || '00000000-0000-4000-8000-000000000000'
+    let userId: string | null = null
 
     // If we have an auth header, try to get the real user
     if (authHeader && !demoUserId) {
@@ -69,7 +66,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('👤 Using user ID:', userId)
+    console.log('👤 Using user ID:', userId || 'anonymous')
 
     // Generate story using Cohere API
     const cohereApiKey = Deno.env.get('COHERE_API_KEY')
@@ -158,52 +155,52 @@ The story should be engaging, age-appropriate, and include a positive moral less
 
     const moral = morals[params.theme] || 'Every challenge is an opportunity to grow and learn.'
 
-    // Save story to database
-    const storyData = {
-      user_id: userId,
-      title: title,
-      content: storyContent,
-      theme: params.theme,
-      hero_name: params.heroName,
-      hero_type: params.heroType,
-      setting: params.setting,
-      age_group: params.ageGroup,
-      story_length: params.storyLength,
-      mood: params.mood || 'happy',
-      magic_level: params.magicLevel || 'medium',
-      is_favorite: false,
-      read_count: 0
+    let savedStory = null
+
+    // Only save to database if we have a valid user ID
+    if (userId) {
+      // Save story to database
+      const storyData = {
+        user_id: userId,
+        title: title,
+        content: storyContent,
+        theme: params.theme,
+        hero_name: params.heroName,
+        hero_type: params.heroType,
+        setting: params.setting,
+        age_group: params.ageGroup,
+        story_length: params.storyLength,
+        mood: params.mood || 'happy',
+        magic_level: params.magicLevel || 'medium',
+        is_favorite: false,
+        read_count: 0
+      }
+
+      console.log('💾 Saving story to database...')
+
+      const { data, error: saveError } = await supabase
+        .from('stories')
+        .insert(storyData)
+        .select()
+        .single()
+
+      if (saveError) {
+        console.error('❌ Database save error:', saveError)
+        // Don't fail the entire request if database save fails for authenticated users
+        console.log('⚠️ Continuing without saving to database')
+      } else {
+        savedStory = data
+        console.log('✅ Story saved to database with ID:', savedStory.id)
+      }
+    } else {
+      console.log('👤 Anonymous user - story not saved to database')
     }
-
-    console.log('💾 Saving story to database...')
-
-    const { data: savedStory, error: saveError } = await supabase
-      .from('stories')
-      .insert(storyData)
-      .select()
-      .single()
-
-    if (saveError) {
-      console.error('❌ Database save error:', saveError)
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Failed to save story to database' 
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    console.log('✅ Story saved to database with ID:', savedStory.id)
 
     // Return the generated story
     const response = {
       success: true,
       story: {
-        id: savedStory.id,
+        id: savedStory?.id || `temp-${Date.now()}`,
         title: title,
         content: storyContent,
         moral: moral,
@@ -215,7 +212,8 @@ The story should be engaging, age-appropriate, and include a positive moral less
         storyLength: params.storyLength,
         mood: params.mood || 'happy',
         magicLevel: params.magicLevel || 'medium',
-        createdAt: savedStory.created_at
+        createdAt: savedStory?.created_at || new Date().toISOString(),
+        isTemporary: !savedStory
       }
     }
 

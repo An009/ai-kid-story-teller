@@ -1,6 +1,3 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-demo-user-id',
@@ -13,7 +10,7 @@ interface UpdateStoryParams {
   incrementReadCount?: boolean;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -45,10 +42,10 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get user ID from header or use demo user
+    // Get user ID from header
     const demoUserId = req.headers.get('x-demo-user-id')
     const authHeader = req.headers.get('Authorization')
-    let userId = demoUserId || '00000000-0000-4000-8000-000000000000'
+    let userId: string | null = null
 
     // If we have an auth header, try to get the real user
     if (authHeader && !demoUserId) {
@@ -57,6 +54,21 @@ serve(async (req) => {
       if (user) {
         userId = user.id
       }
+    }
+
+    // If no authenticated user, return error for update operations
+    if (!userId) {
+      console.log('👤 No authenticated user - cannot update story')
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Authentication required to update stories' 
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     console.log('👤 Updating story for user ID:', userId)
