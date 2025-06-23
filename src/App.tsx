@@ -122,16 +122,14 @@ function AppContent() {
         )}
         
         {/* 3D Character - Interactive Character Layer */}
-        <div className="relative z-15">
-          <CharacterIntegration
-            position={getCharacterPosition()}
-            state={getCharacterState()}
-            onInteraction={() => {
-              // Character interaction feedback
-              console.log('Character interaction!');
-            }}
-          />
-        </div>
+        <CharacterIntegration
+          position={getCharacterPosition()}
+          state={getCharacterState()}
+          onInteraction={() => {
+            // Character interaction feedback
+            console.log('Character interaction!');
+          }}
+        />
 
         {/* Header - Navigation Layer */}
         <header className={`${

@@ -21,17 +21,21 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   onClose
 }) => {
   return (
-    <>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Modal Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-49" onClick={onClose} />
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-49" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
       
-      {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+      {/* Modal Container - Centered with Flexbox */}
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className={`${
           highContrast ? 'bg-gray-900 border-white' : 'bg-white border-gray-200'
-        } rounded-2xl p-6 border shadow-2xl max-w-md w-full`}>
+        } rounded-2xl p-6 border shadow-2xl w-full max-w-md mx-auto relative z-50`}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className={`text-2xl font-bold ${
+            <h3 className={`text-xl sm:text-2xl font-bold ${
               highContrast ? 'text-white' : 'text-gray-800'
             }`}>
               Accessibility Settings
@@ -43,6 +47,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                   ? 'text-white hover:bg-gray-800'
                   : 'text-gray-500 hover:bg-gray-100'
               }`}
+              aria-label="Close accessibility panel"
             >
               <X className="w-6 h-6" />
             </button>
@@ -73,6 +78,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   highContrast ? 'bg-teal' : 'bg-gray-300'
                 }`}
+                aria-label={`${highContrast ? 'Disable' : 'Enable'} high contrast mode`}
               >
                 <div className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform ${
                   highContrast ? 'translate-x-6' : 'translate-x-0.5'
@@ -99,12 +105,12 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                   </p>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 {['small', 'medium', 'large'].map((size) => (
                   <button
                     key={size}
                     onClick={() => setTextSize(size as any)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                       textSize === size
                         ? highContrast
                           ? 'bg-white text-black'
@@ -113,6 +119,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                           ? 'bg-gray-800 text-white hover:bg-gray-700'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
+                    aria-label={`Set text size to ${size}`}
                   >
                     {size.charAt(0).toUpperCase() + size.slice(1)}
                   </button>
@@ -144,6 +151,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   audioEnabled ? 'bg-teal' : 'bg-gray-300'
                 }`}
+                aria-label={`${audioEnabled ? 'Disable' : 'Enable'} audio feedback`}
               >
                 <div className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform ${
                   audioEnabled ? 'translate-x-6' : 'translate-x-0.5'
@@ -166,7 +174,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
