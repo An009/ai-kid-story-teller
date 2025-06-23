@@ -71,7 +71,7 @@ class StoryService {
       const headers = {
         'Authorization': `Bearer ${this.supabaseAnonKey}`,
         'Content-Type': 'application/json',
-        'X-Demo-User-Id': 'demo-user-id' // Add demo user header for testing
+        'X-Demo-User-Id': '00000000-0000-4000-8000-000000000000' // Valid UUID format for demo user
       };
 
       const apiUrl = `${this.supabaseUrl}/functions/v1/generate-story`;
@@ -188,7 +188,7 @@ class StoryService {
       const headers = {
         'Authorization': `Bearer ${this.supabaseAnonKey}`,
         'Content-Type': 'application/json',
-        'X-Demo-User-Id': 'demo-user-id'
+        'X-Demo-User-Id': '00000000-0000-4000-8000-000000000000'
       };
 
       console.log('📡 Making request to get user stories');
@@ -235,7 +235,7 @@ class StoryService {
       const headers = {
         'Authorization': `Bearer ${this.supabaseAnonKey}`,
         'Content-Type': 'application/json',
-        'X-Demo-User-Id': 'demo-user-id'
+        'X-Demo-User-Id': '00000000-0000-4000-8000-000000000000'
       };
 
       const controller = new AbortController();

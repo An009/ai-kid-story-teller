@@ -58,7 +58,7 @@ serve(async (req) => {
     // Get user ID from header or use demo user
     const demoUserId = req.headers.get('x-demo-user-id')
     const authHeader = req.headers.get('Authorization')
-    let userId = demoUserId || 'demo-user-id'
+    let userId = demoUserId || '00000000-0000-4000-8000-000000000000'
 
     // If we have an auth header, try to get the real user
     if (authHeader && !demoUserId) {
