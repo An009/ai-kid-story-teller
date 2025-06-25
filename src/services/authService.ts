@@ -190,7 +190,12 @@ class AuthService {
       const { data: { user }, error } = await this.supabase.auth.getUser();
       
       if (error) {
-        console.error('❌ Get current user error:', error);
+        // Handle "Auth session missing!" as informational rather than an error
+        if (error.message === 'Auth session missing!') {
+          console.info('ℹ️ No active auth session found (user not logged in)');
+        } else {
+          console.error('❌ Get current user error:', error);
+        }
         return null;
       }
       
