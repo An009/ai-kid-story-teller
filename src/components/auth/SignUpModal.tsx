@@ -170,7 +170,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({
       {/* Modal Container */}
       <div 
         ref={modalRef}
-        className="modal-container"
+        className="modal-container auth"
         role="dialog"
         aria-modal="true"
         aria-labelledby="signup-modal-title"

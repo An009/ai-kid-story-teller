@@ -180,7 +180,7 @@ function AppContent() {
         {/* Navigation - Navigation Layer (z-10) */}
         <nav className={`${
           highContrast ? 'bg-gray-800' : 'bg-white/60'
-        } backdrop-blur-sm border-b border-white/20 relative z-10`}>
+        } backdrop-blur-sm border-b border-white/20 relative z-2`}>
           <div className="container mx-auto px-4 py-3">
             <div className="flex justify-center space-x-4">
               <button
