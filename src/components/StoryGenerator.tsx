@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import CharacterSelector from './CharacterSelector';
 import SettingSelector from './SettingSelector';
 import ThemeSelector from './ThemeSelector';
+import EnhancedButton from './ui/EnhancedButton';
+import { SelectionFeedback, FloatingElement } from './ui/MicroInteractions';
 import { Story, StoryOptions } from '../types/Story';
 import { storyService } from '../services/storyService';
 
@@ -203,15 +205,17 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className={`text-center mb-8 ${highContrast ? 'text-white' : 'text-gray-800'}`}>
-        <h2 className="text-4xl font-bold mb-4">Let's Create Your Magical Story!</h2>
-        <p className="text-xl opacity-80">Choose your story elements and watch AI magic unfold.</p>
-        {user && (
-          <p className={`text-sm mt-2 ${highContrast ? 'text-gray-400' : 'text-gray-600'}`}>
-            ✨ Signed in as {user.email} - Your stories will be saved automatically!
-          </p>
-        )}
-      </div>
+      <FloatingElement intensity={30} direction="vertical" duration={4000}>
+        <div className={`text-center mb-8 ${highContrast ? 'text-white' : 'text-gray-800'}`}>
+          <h2 className="text-4xl font-bold mb-4">Let's Create Your Magical Story!</h2>
+          <p className="text-xl opacity-80">Choose your story elements and watch AI magic unfold.</p>
+          {user && (
+            <p className={`text-sm mt-2 ${highContrast ? 'text-gray-400' : 'text-gray-600'}`}>
+              ✨ Signed in as {user.email} - Your stories will be saved automatically!
+            </p>
+          )}
+        </div>
+      </FloatingElement>
 
       {/* Debug Info Panel (only shown when there's debug info) */}
       {debugInfo && (
@@ -288,158 +292,181 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
       )}
 
       {/* Character Name Input */}
-      <div className={`${
-        highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
-      } backdrop-blur-sm rounded-2xl p-6 border shadow-lg mb-8`}>
-        <div className="flex items-center space-x-3 mb-4">
-          <User className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-coral'}`} />
-          <h3 className={`text-2xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
-            Name Your Hero
-          </h3>
+      <SelectionFeedback
+        isSelected={!!selectedOptions.characterName.trim()}
+        glowColor="#FF6B6B"
+        className="mb-8"
+      >
+        <div className={`${
+          highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
+        } backdrop-blur-sm rounded-2xl p-6 border shadow-lg`}>
+          <div className="flex items-center space-x-3 mb-4">
+            <User className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-coral'}`} />
+            <h3 className={`text-2xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
+              Name Your Hero
+            </h3>
+          </div>
+          <input
+            type="text"
+            value={selectedOptions.characterName}
+            onChange={(e) => handleOptionChange('characterName', e.target.value)}
+            placeholder="Enter your character's name (e.g., Luna, Max, Bella)"
+            className={`w-full p-4 rounded-xl text-lg font-medium transition-all duration-200 ${
+              highContrast
+                ? 'bg-gray-700 text-white border-white placeholder-gray-400'
+                : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
+            } border-2 focus:border-coral focus:outline-none focus:ring-4 focus:ring-coral/20`}
+            disabled={isGenerating}
+          />
         </div>
-        <input
-          type="text"
-          value={selectedOptions.characterName}
-          onChange={(e) => handleOptionChange('characterName', e.target.value)}
-          placeholder="Enter your character's name (e.g., Luna, Max, Bella)"
-          className={`w-full p-4 rounded-xl text-lg font-medium transition-all duration-200 ${
-            highContrast
-              ? 'bg-gray-700 text-white border-white placeholder-gray-400'
-              : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
-          } border-2 focus:border-coral focus:outline-none`}
-          disabled={isGenerating}
-        />
-      </div>
+      </SelectionFeedback>
 
       {/* Main Selectors */}
       <div className="grid gap-8 md:grid-cols-3 mb-8">
-        <CharacterSelector
-          selected={selectedOptions.character}
-          onSelect={(character) => handleOptionChange('character', character)}
-          highContrast={highContrast}
-          audioEnabled={audioEnabled}
-          disabled={isGenerating}
-        />
+        <SelectionFeedback
+          isSelected={!!selectedOptions.character}
+          glowColor="#FF6B6B"
+        >
+          <CharacterSelector
+            selected={selectedOptions.character}
+            onSelect={(character) => handleOptionChange('character', character)}
+            highContrast={highContrast}
+            audioEnabled={audioEnabled}
+            disabled={isGenerating}
+          />
+        </SelectionFeedback>
         
-        <SettingSelector
-          selected={selectedOptions.setting}
-          onSelect={(setting) => handleOptionChange('setting', setting)}
-          highContrast={highContrast}
-          audioEnabled={audioEnabled}
-          disabled={isGenerating}
-        />
+        <SelectionFeedback
+          isSelected={!!selectedOptions.setting}
+          glowColor="#4ECDC4"
+        >
+          <SettingSelector
+            selected={selectedOptions.setting}
+            onSelect={(setting) => handleOptionChange('setting', setting)}
+            highContrast={highContrast}
+            audioEnabled={audioEnabled}
+            disabled={isGenerating}
+          />
+        </SelectionFeedback>
         
-        <ThemeSelector
-          selected={selectedOptions.theme}
-          onSelect={(theme) => handleOptionChange('theme', theme)}
-          highContrast={highContrast}
-          audioEnabled={audioEnabled}
-          disabled={isGenerating}
-        />
+        <SelectionFeedback
+          isSelected={!!selectedOptions.theme}
+          glowColor="#9C27B0"
+        >
+          <ThemeSelector
+            selected={selectedOptions.theme}
+            onSelect={(theme) => handleOptionChange('theme', theme)}
+            highContrast={highContrast}
+            audioEnabled={audioEnabled}
+            disabled={isGenerating}
+          />
+        </SelectionFeedback>
       </div>
 
       {/* Age Range and Story Length */}
       <div className="grid gap-6 md:grid-cols-2 mb-8">
         {/* Age Range Selector */}
-        <div className={`${
-          highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
-        } backdrop-blur-sm rounded-2xl p-6 border shadow-lg`}>
-          <div className="flex items-center space-x-3 mb-4">
-            <Heart className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-coral'}`} />
-            <h3 className={`text-xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
-              Age Range
-            </h3>
+        <SelectionFeedback
+          isSelected={!!selectedOptions.ageRange}
+          glowColor="#FFE66D"
+        >
+          <div className={`${
+            highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
+          } backdrop-blur-sm rounded-2xl p-6 border shadow-lg`}>
+            <div className="flex items-center space-x-3 mb-4">
+              <Heart className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-coral'}`} />
+              <h3 className={`text-xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
+                Age Range
+              </h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { value: '4-6', label: '4-6 years', desc: 'Simple & Fun' },
+                { value: '7-9', label: '7-9 years', desc: 'Adventure Time' },
+                { value: '10-12', label: '10-12 years', desc: 'Epic Tales' }
+              ].map((age) => (
+                <EnhancedButton
+                  key={age.value}
+                  onClick={() => handleOptionChange('ageRange', age.value)}
+                  disabled={isGenerating}
+                  variant={selectedOptions.ageRange === age.value ? 'primary' : 'ghost'}
+                  size="small"
+                  fullWidth
+                  highContrast={highContrast}
+                  className="flex-col h-auto py-3"
+                >
+                  <div className="font-bold text-sm">{age.label}</div>
+                  <div className="text-xs opacity-80">{age.desc}</div>
+                </EnhancedButton>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { value: '4-6', label: '4-6 years', desc: 'Simple & Fun' },
-              { value: '7-9', label: '7-9 years', desc: 'Adventure Time' },
-              { value: '10-12', label: '10-12 years', desc: 'Epic Tales' }
-            ].map((age) => (
-              <button
-                key={age.value}
-                onClick={() => handleOptionChange('ageRange', age.value)}
-                disabled={isGenerating}
-                className={`p-3 rounded-xl text-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  selectedOptions.ageRange === age.value
-                    ? highContrast
-                      ? 'bg-white text-black'
-                      : 'bg-coral text-white shadow-lg'
-                    : highContrast
-                      ? 'bg-gray-700 text-white hover:bg-gray-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <div className="font-bold text-sm">{age.label}</div>
-                <div className="text-xs opacity-80">{age.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+        </SelectionFeedback>
 
         {/* Story Length Selector */}
-        <div className={`${
-          highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
-        } backdrop-blur-sm rounded-2xl p-6 border shadow-lg`}>
-          <div className="flex items-center space-x-3 mb-4">
-            <Clock className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-teal'}`} />
-            <h3 className={`text-xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
-              Story Length
-            </h3>
+        <SelectionFeedback
+          isSelected={!!selectedOptions.storyLength}
+          glowColor="#4ECDC4"
+        >
+          <div className={`${
+            highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
+          } backdrop-blur-sm rounded-2xl p-6 border shadow-lg`}>
+            <div className="flex items-center space-x-3 mb-4">
+              <Clock className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-teal'}`} />
+              <h3 className={`text-xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
+                Story Length
+              </h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { value: 'short', label: 'Short', desc: '2-3 min read', words: '200-400 words' },
+                { value: 'medium', label: 'Medium', desc: '4-6 min read', words: '400-700 words' },
+                { value: 'long', label: 'Long', desc: '7-10 min read', words: '700-1000 words' }
+              ].map((length) => (
+                <EnhancedButton
+                  key={length.value}
+                  onClick={() => handleOptionChange('storyLength', length.value)}
+                  disabled={isGenerating}
+                  variant={selectedOptions.storyLength === length.value ? 'secondary' : 'ghost'}
+                  size="small"
+                  fullWidth
+                  highContrast={highContrast}
+                  className="flex-col h-auto py-3"
+                >
+                  <div className="font-bold text-sm">{length.label}</div>
+                  <div className="text-xs opacity-80">{length.desc}</div>
+                  <div className="text-xs opacity-60">{length.words}</div>
+                </EnhancedButton>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { value: 'short', label: 'Short', desc: '2-3 min read', words: '200-400 words' },
-              { value: 'medium', label: 'Medium', desc: '4-6 min read', words: '400-700 words' },
-              { value: 'long', label: 'Long', desc: '7-10 min read', words: '700-1000 words' }
-            ].map((length) => (
-              <button
-                key={length.value}
-                onClick={() => handleOptionChange('storyLength', length.value)}
-                disabled={isGenerating}
-                className={`p-3 rounded-xl text-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  selectedOptions.storyLength === length.value
-                    ? highContrast
-                      ? 'bg-white text-black'
-                      : 'bg-teal text-white shadow-lg'
-                    : highContrast
-                      ? 'bg-gray-700 text-white hover:bg-gray-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <div className="font-bold text-sm">{length.label}</div>
-                <div className="text-xs opacity-80">{length.desc}</div>
-                <div className="text-xs opacity-60">{length.words}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+        </SelectionFeedback>
       </div>
 
       {/* Generate Button */}
       <div className="text-center">
-        <button
-          onClick={handleGenerate}
-          disabled={!canGenerate || isGenerating}
-          className={`relative px-8 py-4 rounded-full font-bold text-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed ${
-            highContrast
-              ? 'bg-white text-black hover:bg-gray-200 disabled:hover:bg-white'
-              : 'bg-gradient-to-r from-coral to-yellow text-white shadow-lg hover:shadow-xl disabled:hover:shadow-lg'
-          }`}
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="inline-block w-6 h-6 animate-spin mr-3" />
-              Creating Magic...
-            </>
-          ) : (
-            <>
-              <Wand2 className="inline-block w-6 h-6 mr-3" />
-              Generate AI Story
-              <Sparkles className="inline-block w-5 h-5 ml-2" />
-            </>
-          )}
-        </button>
+        <FloatingElement intensity={20} direction="vertical" duration={3000}>
+          <EnhancedButton
+            onClick={handleGenerate}
+            disabled={!canGenerate || isGenerating}
+            variant="primary"
+            size="large"
+            icon={isGenerating ? Loader2 : Wand2}
+            iconPosition="left"
+            loading={isGenerating}
+            highContrast={highContrast}
+            glowColor="rgba(255, 107, 107, 0.4)"
+            animationIntensity={80}
+            className="text-xl px-12 py-5"
+          >
+            {isGenerating ? 'Creating Magic...' : (
+              <>
+                Generate AI Story
+                <Sparkles className="inline-block w-5 h-5 ml-2" />
+              </>
+            )}
+          </EnhancedButton>
+        </FloatingElement>
         
         {!canGenerate && !isGenerating && (
           <div className={`mt-4 text-sm ${highContrast ? 'text-gray-400' : 'text-gray-600'}`}>

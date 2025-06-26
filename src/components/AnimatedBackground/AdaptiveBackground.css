@@ -1,0 +1,175 @@
+/* Adaptive Background Styles */
+.adaptive-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  overflow: hidden;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.background-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.atmospheric-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transition: all 0.6s ease-in-out;
+  z-index: 1;
+}
+
+.particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.static-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.static-particle {
+  animation: none !important;
+  transition: opacity 0.3s ease;
+}
+
+/* Setting-specific enhancements */
+.adaptive-background.forest {
+  --primary-glow: #4CAF50;
+  --secondary-glow: #8BC34A;
+}
+
+.adaptive-background.forest .atmospheric-overlay {
+  background: radial-gradient(circle at 30% 70%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(139, 195, 74, 0.08) 0%, transparent 50%);
+}
+
+.adaptive-background.ocean {
+  --primary-glow: #2196F3;
+  --secondary-glow: #00BCD4;
+}
+
+.adaptive-background.ocean .atmospheric-overlay {
+  background: radial-gradient(circle at 40% 60%, rgba(33, 150, 243, 0.12) 0%, transparent 60%),
+              radial-gradient(circle at 80% 20%, rgba(0, 188, 212, 0.1) 0%, transparent 50%);
+}
+
+.adaptive-background.space {
+  --primary-glow: #9C27B0;
+  --secondary-glow: #3F51B5;
+}
+
+.adaptive-background.space .atmospheric-overlay {
+  background: radial-gradient(circle at 20% 80%, rgba(156, 39, 176, 0.08) 0%, transparent 70%),
+              radial-gradient(circle at 90% 10%, rgba(63, 81, 181, 0.06) 0%, transparent 60%);
+}
+
+.adaptive-background.castle {
+  --primary-glow: #E91E63;
+  --secondary-glow: #9C27B0;
+}
+
+.adaptive-background.castle .atmospheric-overlay {
+  background: radial-gradient(circle at 50% 50%, rgba(233, 30, 99, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 25% 75%, rgba(156, 39, 176, 0.08) 0%, transparent 60%);
+}
+
+.adaptive-background.mountain {
+  --primary-glow: #607D8B;
+  --secondary-glow: #9E9E9E;
+}
+
+.adaptive-background.mountain .atmospheric-overlay {
+  background: radial-gradient(circle at 60% 40%, rgba(96, 125, 139, 0.1) 0%, transparent 70%),
+              radial-gradient(circle at 30% 80%, rgba(158, 158, 158, 0.06) 0%, transparent 50%);
+}
+
+.adaptive-background.village {
+  --primary-glow: #FF9800;
+  --secondary-glow: #FFC107;
+}
+
+.adaptive-background.village .atmospheric-overlay {
+  background: radial-gradient(circle at 70% 30%, rgba(255, 152, 0, 0.1) 0%, transparent 60%),
+              radial-gradient(circle at 20% 70%, rgba(255, 193, 7, 0.08) 0%, transparent 50%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .adaptive-background {
+    background-attachment: scroll;
+  }
+  
+  .particle-canvas {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 480px) {
+  .atmospheric-overlay {
+    opacity: 0.8;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .adaptive-background {
+    filter: contrast(1.2);
+  }
+  
+  .atmospheric-overlay {
+    opacity: 0.5;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .adaptive-background,
+  .background-gradient,
+  .atmospheric-overlay {
+    transition: none !important;
+  }
+  
+  .particle-canvas {
+    display: none;
+  }
+  
+  .static-particles {
+    opacity: 0.6;
+  }
+}
+
+/* Performance optimizations */
+.adaptive-background * {
+  will-change: transform, opacity;
+}
+
+/* Ensure smooth performance on lower-end devices */
+@media (max-resolution: 150dpi) {
+  .background-gradient {
+    filter: blur(2px) !important;
+  }
+}
