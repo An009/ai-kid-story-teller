@@ -32,6 +32,24 @@ interface StoryResponse {
   message?: string;
 }
 
+interface SavedStory {
+  id: string;
+  title: string;
+  content: string;
+  theme: string;
+  hero_name: string;
+  hero_type: string;
+  setting: string;
+  age_group: string;
+  story_length: string;
+  mood: string;
+  magic_level: string;
+  created_at: string;
+  updated_at: string;
+  is_favorite: boolean;
+  read_count: number;
+}
+
 class StoryService {
   private supabaseUrl: string;
   private supabaseAnonKey: string;
@@ -153,24 +171,7 @@ class StoryService {
         theme: data.story.theme
       });
 
-      // Transform the response to match our Story interface
-      const story: GeneratedStory = {
-        id: data.story.id,
-        title: data.story.title,
-        content: data.story.content,
-        moral: data.story.moral,
-        theme: data.story.theme,
-        heroName: data.story.heroName,
-        heroType: data.story.heroType,
-        setting: data.story.setting,
-        ageGroup: data.story.ageGroup,
-        storyLength: data.story.storyLength,
-        mood: data.story.mood,
-        magicLevel: data.story.magicLevel,
-        createdAt: data.story.createdAt
-      };
-
-      return story;
+      return data.story;
     } catch (error) {
       console.error('💥 Error in generateStory:', error);
       console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -190,7 +191,59 @@ class StoryService {
     }
   }
 
-  async getUserStories(userToken?: string): Promise<any[]> {
+  async saveStory(story: GeneratedStory, userToken?: string): Promise<SavedStory> {
+    console.log('💾 Saving story:', story.id);
+    
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': this.supabaseAnonKey
+      };
+
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+        console.log('🔐 Using authenticated user token for save');
+      } else {
+        throw new Error('Authentication required to save stories');
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+      const response = await fetch(`${this.supabaseUrl}/functions/v1/save-story`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(story),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('📨 Save story response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Error saving story:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Story saved successfully:', data.story.id);
+      
+      return data.story;
+    } catch (error) {
+      console.error('💥 Error saving story:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out while saving story. Please try again.');
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to story service. Please check your internet connection and try again.');
+      } else {
+        throw new Error('Failed to save story. Please try again.');
+      }
+    }
+  }
+
+  async getUserStories(userToken?: string): Promise<SavedStory[]> {
     console.log('📚 Fetching user stories...');
     
     try {
@@ -199,14 +252,12 @@ class StoryService {
         'apikey': this.supabaseAnonKey
       };
 
-      // Add authorization header if user is authenticated
       if (userToken) {
         headers['Authorization'] = `Bearer ${userToken}`;
         console.log('🔐 Using authenticated user token for stories');
       } else {
-        headers['Authorization'] = `Bearer ${this.supabaseAnonKey}`;
-        headers['X-Demo-User-Id'] = '00000000-0000-4000-8000-000000000000';
-        console.log('👤 Using demo user for unauthenticated stories request');
+        console.log('👤 No authentication - returning empty stories list');
+        return [];
       }
 
       console.log('📡 Making request to get user stories');
@@ -246,6 +297,55 @@ class StoryService {
     }
   }
 
+  async deleteStory(storyId: string, userToken?: string): Promise<void> {
+    console.log('🗑️ Deleting story:', storyId);
+    
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': this.supabaseAnonKey
+      };
+
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+        console.log('🔐 Using authenticated user token for delete');
+      } else {
+        throw new Error('Authentication required to delete stories');
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(`${this.supabaseUrl}/functions/v1/delete-story`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ storyId }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('📨 Delete story response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Error deleting story:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('✅ Story deleted successfully');
+    } catch (error) {
+      console.error('💥 Error deleting story:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out while deleting story. Please try again.');
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to story service. Please check your internet connection and try again.');
+      } else {
+        throw new Error('Failed to delete story. Please try again.');
+      }
+    }
+  }
+
   async updateStory(storyId: string, updates: { isFavorite?: boolean; incrementReadCount?: boolean }, userToken?: string): Promise<void> {
     console.log('📝 Updating story:', storyId, updates);
     
@@ -255,7 +355,6 @@ class StoryService {
         'apikey': this.supabaseAnonKey
       };
 
-      // Add authorization header if user is authenticated
       if (userToken) {
         headers['Authorization'] = `Bearer ${userToken}`;
         console.log('🔐 Using authenticated user token for update');

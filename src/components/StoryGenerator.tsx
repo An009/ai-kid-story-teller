@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Wand2, User, MapPin, Heart, Clock, BookOpen, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Wand2, User, MapPin, Heart, Clock, BookOpen, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CharacterSelector from './CharacterSelector';
 import SettingSelector from './SettingSelector';
@@ -31,6 +31,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
   const [generationProgress, setGenerationProgress] = useState(0);
   const [generationStatus, setGenerationStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [debugInfo, setDebugInfo] = useState<any>(null);
 
   // Test connection on component mount
@@ -88,6 +89,36 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     return interval;
   };
 
+  const saveStoryToDatabase = async (generatedStory: any, userToken?: string) => {
+    if (!user || !userToken) {
+      console.log('👤 No authenticated user - skipping database save');
+      return null;
+    }
+
+    try {
+      setSaveStatus('saving');
+      console.log('💾 Saving story to database...');
+      
+      const savedStory = await storyService.saveStory(generatedStory, userToken);
+      
+      console.log('✅ Story saved to database successfully:', savedStory.id);
+      setSaveStatus('saved');
+      
+      // Clear save status after 3 seconds
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      
+      return savedStory;
+    } catch (error) {
+      console.error('❌ Failed to save story to database:', error);
+      setSaveStatus('error');
+      
+      // Clear error status after 5 seconds
+      setTimeout(() => setSaveStatus('idle'), 5000);
+      
+      return null;
+    }
+  };
+
   const handleGenerate = async () => {
     console.log('🚀 Generate button clicked!');
     console.log('📋 Current options:', selectedOptions);
@@ -112,6 +143,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     setIsGenerating(true);
     setError(null);
     setDebugInfo(null);
+    setSaveStatus('idle');
     setGenerationProgress(0);
     setGenerationStatus('Initializing...');
     
@@ -169,6 +201,11 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
 
       console.log('📖 Transformed story for display:', story);
       
+      // Automatically save story to database if user is authenticated
+      if (user) {
+        await saveStoryToDatabase(generatedStory, userToken);
+      }
+      
       // Small delay to show completion
       setTimeout(() => {
         onStoryGenerated(story);
@@ -207,9 +244,29 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
         <h2 className="text-4xl font-bold mb-4">Let's Create Your Magical Story!</h2>
         <p className="text-xl opacity-80">Choose your story elements and watch AI magic unfold.</p>
         {user && (
-          <p className={`text-sm mt-2 ${highContrast ? 'text-gray-400' : 'text-gray-600'}`}>
-            ✨ Signed in as {user.email} - Your stories will be saved automatically!
-          </p>
+          <div className="flex items-center justify-center space-x-2 mt-2">
+            <p className={`text-sm ${highContrast ? 'text-gray-400' : 'text-gray-600'}`}>
+              ✨ Signed in as {user.email} - Your stories will be saved automatically!
+            </p>
+            {saveStatus === 'saving' && (
+              <div className="flex items-center space-x-1 text-blue-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Saving...</span>
+              </div>
+            )}
+            {saveStatus === 'saved' && (
+              <div className="flex items-center space-x-1 text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-sm">Saved!</span>
+              </div>
+            )}
+            {saveStatus === 'error' && (
+              <div className="flex items-center space-x-1 text-red-600">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">Save failed</span>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
