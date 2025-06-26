@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LucideIcon } from 'lucide-react';
+import { DivideIcon as LucideIcon } from 'lucide-react';
 import './EnhancedButton.css';
 
 interface EnhancedButtonProps {
