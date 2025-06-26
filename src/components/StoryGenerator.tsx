@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Wand2, User, MapPin, Heart, Clock, BookOpen, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Sparkles, Wand2, User, MapPin, Heart, Clock, BookOpen, Loader2, AlertCircle, CheckCircle, Volume2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CharacterSelector from './CharacterSelector';
 import SettingSelector from './SettingSelector';
 import ThemeSelector from './ThemeSelector';
+import VoiceSelector from './VoiceSelector';
 import { Story, StoryOptions } from '../types/Story';
 import { storyService } from '../services/storyService';
+import { voiceService } from '../services/voiceService';
 
 interface StoryGeneratorProps {
   onStoryGenerated: (story: Story) => void;
@@ -27,6 +29,8 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     ageRange: '4-6',
     storyLength: 'medium'
   });
+  const [selectedVoice, setSelectedVoice] = useState('wiseStoryteller');
+  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [generationStatus, setGenerationStatus] = useState('');
@@ -53,6 +57,16 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
 
     testConnection();
   }, []);
+
+  // Update recommended voice when story options change
+  useEffect(() => {
+    if (selectedOptions.character || selectedOptions.theme || selectedOptions.setting) {
+      const storyContext = `${selectedOptions.character} ${selectedOptions.theme} ${selectedOptions.setting}`;
+      const recommendedVoice = voiceService.getRecommendedVoice(storyContext, selectedOptions.character);
+      setSelectedVoice(recommendedVoice);
+      console.log('🎤 Updated recommended voice:', recommendedVoice);
+    }
+  }, [selectedOptions.character, selectedOptions.theme, selectedOptions.setting]);
 
   const handleOptionChange = (type: keyof StoryOptions, value: string) => {
     console.log('🎛️ Option changed:', type, '=', value);
@@ -131,6 +145,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     console.log('🚀 Generate button clicked!');
     console.log('📋 Current options:', selectedOptions);
     console.log('👤 Current user:', user?.email || 'anonymous');
+    console.log('🎤 Selected voice:', selectedVoice);
 
     // Validate required fields
     if (!selectedOptions.character || !selectedOptions.setting || !selectedOptions.theme || !selectedOptions.characterName.trim()) {
@@ -483,6 +498,55 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Voice Selector */}
+      {audioEnabled && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Volume2 className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-purple-600'}`} />
+              <h3 className={`text-2xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
+                Choose Reading Voice
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowVoiceSelector(!showVoiceSelector)}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                showVoiceSelector
+                  ? 'bg-purple-500 text-white'
+                  : highContrast
+                    ? 'bg-gray-700 text-white hover:bg-gray-600'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+            >
+              {showVoiceSelector ? 'Hide Voices' : 'Show Voices'}
+            </button>
+          </div>
+
+          {showVoiceSelector && (
+            <VoiceSelector
+              selectedVoice={selectedVoice}
+              onVoiceChange={setSelectedVoice}
+              highContrast={highContrast}
+              disabled={isGenerating}
+            />
+          )}
+
+          {!showVoiceSelector && (
+            <div className={`p-4 rounded-xl ${
+              highContrast ? 'bg-gray-800 border-white' : 'bg-purple-50 border-purple-200'
+            } border`}>
+              <p className={`text-sm ${
+                highContrast ? 'text-gray-300' : 'text-purple-700'
+              }`}>
+                <strong>Selected Voice:</strong> {voiceService.getPersonality(selectedVoice)?.name || selectedVoice}
+                {' - '}
+                {voiceService.getPersonality(selectedVoice)?.description}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Generate Button */}
       <div className="text-center">
