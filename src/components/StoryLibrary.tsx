@@ -9,6 +9,8 @@ interface StoryLibraryProps {
   onStorySelect: (story: Story) => void;
   onDeleteStory: (storyId: string) => void;
   highContrast: boolean;
+  // Add refresh trigger prop to force component updates
+  refreshTrigger?: number;
 }
 
 interface SavedStory {
@@ -33,7 +35,8 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   stories: localStories,
   onStorySelect,
   onDeleteStory,
-  highContrast
+  highContrast,
+  refreshTrigger = 0
 }) => {
   const { user } = useAuth();
   const [databaseStories, setDatabaseStories] = useState<SavedStory[]>([]);
@@ -41,14 +44,18 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hoveredStory, setHoveredStory] = useState<string | null>(null);
 
-  // Load stories from database when component mounts or user changes
+  // Load stories from database when component mounts, user changes, or refresh is triggered
   useEffect(() => {
     if (user) {
+      console.log('🔄 StoryLibrary: Loading stories due to dependency change', {
+        userEmail: user.email,
+        refreshTrigger
+      });
       loadStoriesFromDatabase();
     } else {
       setDatabaseStories([]);
     }
-  }, [user]);
+  }, [user, refreshTrigger]); // Add refreshTrigger as dependency
 
   const loadStoriesFromDatabase = async () => {
     if (!user) return;
@@ -58,7 +65,12 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
     try {
       console.log('📚 Loading stories from database...');
-      const stories = await storyService.getUserStories();
+      
+      // Get user session token for authenticated requests
+      const session = await user.getSession?.();
+      const userToken = session?.access_token;
+      
+      const stories = await storyService.getUserStories(userToken);
       setDatabaseStories(stories);
       console.log('✅ Loaded', stories.length, 'stories from database');
     } catch (error) {
@@ -78,9 +90,14 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
     try {
       console.log('🗑️ Deleting story from database:', storyId);
-      await storyService.deleteStory(storyId);
       
-      // Remove from local state
+      // Get user session token for authenticated requests
+      const session = await user.getSession?.();
+      const userToken = session?.access_token;
+      
+      await storyService.deleteStory(storyId, userToken);
+      
+      // Remove from local state immediately for instant UI update
       setDatabaseStories(prev => prev.filter(story => story.id !== storyId));
       
       console.log('✅ Story deleted successfully');
@@ -95,9 +112,14 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
 
     try {
       console.log('❤️ Toggling favorite status for story:', storyId);
-      await storyService.updateStory(storyId, { isFavorite: !currentFavorite });
       
-      // Update local state
+      // Get user session token for authenticated requests
+      const session = await user.getSession?.();
+      const userToken = session?.access_token;
+      
+      await storyService.updateStory(storyId, { isFavorite: !currentFavorite }, userToken);
+      
+      // Update local state immediately for instant UI update
       setDatabaseStories(prev => 
         prev.map(story => 
           story.id === storyId 
@@ -135,8 +157,13 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
       // Increment read count for database stories
       if (user) {
         try {
-          await storyService.updateStory(story.id, { incrementReadCount: true });
-          // Update local state
+          // Get user session token for authenticated requests
+          const session = await user.getSession?.();
+          const userToken = session?.access_token;
+          
+          await storyService.updateStory(story.id, { incrementReadCount: true }, userToken);
+          
+          // Update local state immediately for instant UI update
           setDatabaseStories(prev => 
             prev.map(s => 
               s.id === story.id 
@@ -226,7 +253,7 @@ const StoryLibrary: React.FC<StoryLibraryProps> = ({
         </p>
         <button
           onClick={loadStoriesFromDatabase}
-          className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+          className={`flex items-center space-x-2 mx-auto px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
             highContrast
               ? 'bg-white text-black hover:bg-gray-200'
               : 'bg-coral text-white hover:bg-coral/80'

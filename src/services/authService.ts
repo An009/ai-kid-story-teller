@@ -10,6 +10,8 @@ export interface AuthUser {
   id: string;
   email: string;
   created_at: string;
+  // Add method to get session for API calls
+  getSession?: () => Promise<{ access_token: string } | null>;
 }
 
 class AuthService {
@@ -50,6 +52,24 @@ class AuthService {
     return true;
   }
 
+  // Helper method to enhance user object with session getter
+  private enhanceUser(user: User): AuthUser {
+    return {
+      ...user,
+      getSession: async () => {
+        if (!this.checkInitialization()) return null;
+        
+        try {
+          const { data: { session } } = await this.supabase.auth.getSession();
+          return session;
+        } catch (error) {
+          console.error('❌ Failed to get session:', error);
+          return null;
+        }
+      }
+    };
+  }
+
   async signIn(email: string, password: string): Promise<AuthResponse> {
     if (!this.checkInitialization()) {
       return {
@@ -78,7 +98,7 @@ class AuthService {
 
       console.log('✅ Sign in successful');
       return {
-        user: data.user,
+        user: data.user ? this.enhanceUser(data.user) : null,
         error: null,
         success: true
       };
@@ -123,7 +143,7 @@ class AuthService {
 
       console.log('✅ Sign up successful');
       return {
-        user: data.user,
+        user: data.user ? this.enhanceUser(data.user) : null,
         error: null,
         success: true
       };
@@ -158,7 +178,7 @@ class AuthService {
     }
   }
 
-  onAuthStateChange(callback: (user: User | null) => void) {
+  onAuthStateChange(callback: (user: AuthUser | null) => void) {
     if (!this.checkInitialization()) {
       console.error('❌ Cannot set up auth state listener - service not initialized');
       // Return a no-op unsubscribe function
@@ -170,7 +190,7 @@ class AuthService {
     const { data: { subscription } } = this.supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
-        callback(session?.user || null);
+        callback(session?.user ? this.enhanceUser(session.user) : null);
       }
     );
 
@@ -180,7 +200,7 @@ class AuthService {
     };
   }
 
-  async getCurrentUser(): Promise<User | null> {
+  async getCurrentUser(): Promise<AuthUser | null> {
     if (!this.checkInitialization()) {
       console.error('❌ Cannot get current user - service not initialized');
       return null;
@@ -199,7 +219,7 @@ class AuthService {
         return null;
       }
       
-      return user;
+      return user ? this.enhanceUser(user) : null;
     } catch (error) {
       console.error('💥 Unexpected get current user error:', error);
       return null;

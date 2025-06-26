@@ -18,6 +18,8 @@ function AppContent() {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [highContrast, setHighContrast] = useState(false);
   const [textSize, setTextSize] = useState<'small' | 'medium' | 'large'>('medium');
+  // Add state to trigger Story Library refresh
+  const [libraryRefreshTrigger, setLibraryRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const saved = localStorage.getItem('savedStories');
@@ -58,11 +60,22 @@ function AppContent() {
   const handleStoryGenerated = (story: Story) => {
     setCurrentStory(story);
     setCurrentView('story');
+    
+    // Trigger Story Library refresh after a story is generated and potentially saved
+    // This ensures the library will reload its data from the database
+    console.log('🔄 Story generated - triggering library refresh');
+    setLibraryRefreshTrigger(prev => prev + 1);
   };
 
   const handleStorySelect = (story: Story) => {
     setCurrentStory(story);
     setCurrentView('story');
+  };
+
+  // Function to manually trigger library refresh
+  const refreshStoryLibrary = () => {
+    console.log('🔄 Manually triggering library refresh');
+    setLibraryRefreshTrigger(prev => prev + 1);
   };
 
   const getCharacterPosition = () => {
@@ -200,7 +213,11 @@ function AppContent() {
               </button>
               
               <button
-                onClick={() => setCurrentView('library')}
+                onClick={() => {
+                  setCurrentView('library');
+                  // Refresh library when navigating to it
+                  refreshStoryLibrary();
+                }}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
                   currentView === 'library'
                     ? highContrast
@@ -247,6 +264,8 @@ function AppContent() {
               onStorySelect={handleStorySelect}
               onDeleteStory={deleteStory}
               highContrast={highContrast}
+              // Pass refresh trigger to force component to reload data
+              refreshTrigger={libraryRefreshTrigger}
             />
           )}
           

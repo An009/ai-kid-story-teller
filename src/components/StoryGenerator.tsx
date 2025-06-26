@@ -89,8 +89,8 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     return interval;
   };
 
-  const saveStoryToDatabase = async (generatedStory: any, userToken?: string) => {
-    if (!user || !userToken) {
+  const saveStoryToDatabase = async (generatedStory: any) => {
+    if (!user) {
       console.log('👤 No authenticated user - skipping database save');
       return null;
     }
@@ -98,6 +98,14 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     try {
       setSaveStatus('saving');
       console.log('💾 Saving story to database...');
+      
+      // Get user session token for authenticated requests
+      const session = await user.getSession?.();
+      const userToken = session?.access_token;
+      
+      if (!userToken) {
+        throw new Error('No authentication token available');
+      }
       
       const savedStory = await storyService.saveStory(generatedStory, userToken);
       
@@ -170,8 +178,9 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
       // Get user token if authenticated
       let userToken: string | undefined;
       if (user) {
-        // In a real app, you'd get the session token from Supabase
-        // For now, we'll use the anon key but with proper user context
+        // Get user session token for authenticated requests
+        const session = await user.getSession?.();
+        userToken = session?.access_token;
         console.log('🔐 User is authenticated, using user context');
       }
 
@@ -202,11 +211,13 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({
       console.log('📖 Transformed story for display:', story);
       
       // Automatically save story to database if user is authenticated
+      // This will trigger the save status indicators
       if (user) {
-        await saveStoryToDatabase(generatedStory, userToken);
+        await saveStoryToDatabase(generatedStory);
       }
       
-      // Small delay to show completion
+      // Small delay to show completion, then trigger the story generated callback
+      // This will cause App.tsx to refresh the Story Library
       setTimeout(() => {
         onStoryGenerated(story);
         setIsGenerating(false);
