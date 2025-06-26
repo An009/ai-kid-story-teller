@@ -7,9 +7,7 @@ import StoryLibrary from './components/StoryLibrary';
 import StoryDisplay from './components/StoryDisplay';
 import AccessibilityPanel from './components/AccessibilityPanel';
 import { CharacterProvider, CharacterIntegration } from './components/Character3D';
-import AdaptiveBackground from './components/AnimatedBackground/AdaptiveBackground';
-import EnhancedButton from './components/ui/EnhancedButton';
-import { PageTransition } from './components/ui/MicroInteractions';
+import { AnimatedBackground } from './components/AnimatedBackground';
 import { Story } from './types/Story';
 
 function AppContent() {
@@ -20,7 +18,6 @@ function AppContent() {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [highContrast, setHighContrast] = useState(false);
   const [textSize, setTextSize] = useState<'small' | 'medium' | 'large'>('medium');
-  const [currentSetting, setCurrentSetting] = useState('forest');
 
   useEffect(() => {
     const saved = localStorage.getItem('savedStories');
@@ -61,19 +58,11 @@ function AppContent() {
   const handleStoryGenerated = (story: Story) => {
     setCurrentStory(story);
     setCurrentView('story');
-    // Update background setting based on story
-    if (story.setting) {
-      setCurrentSetting(story.setting);
-    }
   };
 
   const handleStorySelect = (story: Story) => {
     setCurrentStory(story);
     setCurrentView('story');
-    // Update background setting based on story
-    if (story.setting) {
-      setCurrentSetting(story.setting);
-    }
   };
 
   const getCharacterPosition = () => {
@@ -119,11 +108,11 @@ function AppContent() {
         textSize === 'small' ? 'text-sm' : textSize === 'large' ? 'text-lg' : 'text-base'
       }`}>
         
-        {/* Adaptive Background - Base Layer (z-1) */}
-        <AdaptiveBackground
-          setting={currentSetting as any}
-          intensity={highContrast ? 40 : 70}
-          reducedMotion={prefersReducedMotion}
+        {/* Animated Background - Base Layer (z-1) */}
+        <AnimatedBackground
+          particleCount={prefersReducedMotion ? 0 : 65}
+          enableParticles={!prefersReducedMotion && !highContrast}
+          blurIntensity={highContrast ? 1 : 2.5}
           className={`${highContrast ? 'high-contrast' : ''} z-1`}
         />
         
@@ -158,23 +147,29 @@ function AppContent() {
               </div>
               
               <div className="flex items-center space-x-2">
-                <EnhancedButton
+                <button
                   onClick={() => setAudioEnabled(!audioEnabled)}
-                  variant="ghost"
-                  size="small"
-                  icon={audioEnabled ? Volume2 : VolumeX}
-                  highContrast={highContrast}
+                  className={`p-2 rounded-full transition-all duration-200 ${
+                    highContrast 
+                      ? 'bg-white text-black hover:bg-gray-200' 
+                      : 'bg-coral hover:bg-coral/80 text-white'
+                  }`}
                   aria-label={audioEnabled ? 'Disable audio' : 'Enable audio'}
-                />
+                >
+                  {audioEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                </button>
                 
-                <EnhancedButton
+                <button
                   onClick={() => setIsAccessibilityOpen(!isAccessibilityOpen)}
-                  variant="ghost"
-                  size="small"
-                  icon={Settings}
-                  highContrast={highContrast}
+                  className={`p-2 rounded-full transition-all duration-200 ${
+                    highContrast 
+                      ? 'bg-white text-black hover:bg-gray-200' 
+                      : 'bg-teal hover:bg-teal/80 text-white'
+                  }`}
                   aria-label="Accessibility settings"
-                />
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
 
                 <AuthButton highContrast={highContrast} />
               </div>
@@ -188,25 +183,37 @@ function AppContent() {
         } backdrop-blur-sm border-b border-white/20 relative z-2`}>
           <div className="container mx-auto px-4 py-3">
             <div className="flex justify-center space-x-4">
-              <EnhancedButton
+              <button
                 onClick={() => setCurrentView('generator')}
-                variant={currentView === 'generator' ? 'primary' : 'ghost'}
-                icon={BookOpen}
-                highContrast={highContrast}
-                glowColor="rgba(255, 107, 107, 0.3)"
+                className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
+                  currentView === 'generator'
+                    ? highContrast
+                      ? 'bg-white text-black'
+                      : 'bg-coral text-white shadow-lg'
+                    : highContrast
+                      ? 'text-white hover:bg-gray-700'
+                      : 'text-gray-600 hover:bg-white/50'
+                }`}
               >
-                Create Story
-              </EnhancedButton>
+                <BookOpen className="w-5 h-5" />
+                <span>Create Story</span>
+              </button>
               
-              <EnhancedButton
+              <button
                 onClick={() => setCurrentView('library')}
-                variant={currentView === 'library' ? 'secondary' : 'ghost'}
-                icon={Library}
-                highContrast={highContrast}
-                glowColor="rgba(78, 205, 196, 0.3)"
+                className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
+                  currentView === 'library'
+                    ? highContrast
+                      ? 'bg-white text-black'
+                      : 'bg-teal text-white shadow-lg'
+                    : highContrast
+                      ? 'text-white hover:bg-gray-700'
+                      : 'text-gray-600 hover:bg-white/50'
+                }`}
               >
-                My Stories ({savedStories.length})
-              </EnhancedButton>
+                <Library className="w-5 h-5" />
+                <span>My Stories ({savedStories.length})</span>
+              </button>
             </div>
           </div>
         </nav>
@@ -226,38 +233,32 @@ function AppContent() {
 
         {/* Main Content - Base Layer (z-1) */}
         <main className="container mx-auto px-4 py-8 relative z-1">
-          <PageTransition isVisible={currentView === 'generator'} direction="up">
-            {currentView === 'generator' && (
-              <StoryGenerator 
-                onStoryGenerated={handleStoryGenerated}
-                highContrast={highContrast}
-                audioEnabled={audioEnabled}
-              />
-            )}
-          </PageTransition>
+          {currentView === 'generator' && (
+            <StoryGenerator 
+              onStoryGenerated={handleStoryGenerated}
+              highContrast={highContrast}
+              audioEnabled={audioEnabled}
+            />
+          )}
           
-          <PageTransition isVisible={currentView === 'library'} direction="up">
-            {currentView === 'library' && (
-              <StoryLibrary
-                stories={savedStories}
-                onStorySelect={handleStorySelect}
-                onDeleteStory={deleteStory}
-                highContrast={highContrast}
-              />
-            )}
-          </PageTransition>
+          {currentView === 'library' && (
+            <StoryLibrary
+              stories={savedStories}
+              onStorySelect={handleStorySelect}
+              onDeleteStory={deleteStory}
+              highContrast={highContrast}
+            />
+          )}
           
-          <PageTransition isVisible={currentView === 'story'} direction="up">
-            {currentView === 'story' && currentStory && (
-              <StoryDisplay
-                story={currentStory}
-                onSave={saveStory}
-                onBack={() => setCurrentView('generator')}
-                highContrast={highContrast}
-                audioEnabled={audioEnabled}
-              />
-            )}
-          </PageTransition>
+          {currentView === 'story' && currentStory && (
+            <StoryDisplay
+              story={currentStory}
+              onSave={saveStory}
+              onBack={() => setCurrentView('generator')}
+              highContrast={highContrast}
+              audioEnabled={audioEnabled}
+            />
+          )}
         </main>
       </div>
     </CharacterProvider>
