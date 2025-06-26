@@ -84,29 +84,17 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
         aria-modal="true"
         aria-labelledby="accessibility-modal-title"
       >
-        <div className={`
-          w-full rounded-2xl p-6 shadow-2xl
-          ${highContrast 
-            ? 'bg-gray-900 border-2 border-white' 
-            : 'bg-white border border-gray-200'
-          }
-        `}>
+        <div className="w-full rounded-2xl p-6 shadow-2xl bg-gray-800 border-2 border-gray-600">
           <div className="flex items-center justify-between mb-6">
             <h3 
               id="accessibility-modal-title"
-              className={`text-xl sm:text-2xl font-bold ${
-                highContrast ? 'text-white' : 'text-gray-800'
-              }`}
+              className="text-xl sm:text-2xl font-bold text-white"
             >
               Accessibility Settings
             </h3>
             <button
               onClick={handleClose}
-              className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
-                highContrast
-                  ? 'text-white hover:bg-gray-800'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
+              className="p-2 rounded-full transition-all duration-200 hover:scale-110 text-white hover:bg-gray-700"
               aria-label="Close accessibility panel"
             >
               <X className="w-6 h-6" />
@@ -117,26 +105,20 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
             {/* High Contrast */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Eye className={`w-6 h-6 ${
-                  highContrast ? 'text-white' : 'text-gray-600'
-                }`} />
+                <Eye className="w-6 h-6 text-white" />
                 <div>
-                  <h4 className={`font-medium ${
-                    highContrast ? 'text-white' : 'text-gray-800'
-                  }`}>
+                  <h4 className="font-medium text-white">
                     High Contrast Mode
                   </h4>
-                  <p className={`text-sm ${
-                    highContrast ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    Better visibility for low vision
+                  <p className="text-sm text-gray-400">
+                    Enhanced visibility for low vision users
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setHighContrast(!highContrast)}
                 className={`relative w-12 h-6 rounded-full transition-all duration-200 hover:scale-105 ${
-                  highContrast ? 'bg-teal' : 'bg-gray-300'
+                  highContrast ? 'bg-teal' : 'bg-gray-600'
                 }`}
                 aria-label={`${highContrast ? 'Disable' : 'Enable'} high contrast mode`}
               >
@@ -149,18 +131,12 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
             {/* Text Size */}
             <div>
               <div className="flex items-center space-x-3 mb-3">
-                <Type className={`w-6 h-6 ${
-                  highContrast ? 'text-white' : 'text-gray-600'
-                }`} />
+                <Type className="w-6 h-6 text-white" />
                 <div>
-                  <h4 className={`font-medium ${
-                    highContrast ? 'text-white' : 'text-gray-800'
-                  }`}>
+                  <h4 className="font-medium text-white">
                     Text Size
                   </h4>
-                  <p className={`text-sm ${
-                    highContrast ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <p className="text-sm text-gray-400">
                     Choose comfortable reading size
                   </p>
                 </div>
@@ -172,12 +148,8 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                     onClick={() => setTextSize(size as any)}
                     className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 ${
                       textSize === size
-                        ? highContrast
-                          ? 'bg-white text-black'
-                          : 'bg-coral text-white'
-                        : highContrast
-                          ? 'bg-gray-800 text-white hover:bg-gray-700'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-coral text-white'
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
                     }`}
                     aria-label={`Set text size to ${size}`}
                   >
@@ -190,26 +162,20 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
             {/* Audio */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Volume2 className={`w-6 h-6 ${
-                  highContrast ? 'text-white' : 'text-gray-600'
-                }`} />
+                <Volume2 className="w-6 h-6 text-white" />
                 <div>
-                  <h4 className={`font-medium ${
-                    highContrast ? 'text-white' : 'text-gray-800'
-                  }`}>
+                  <h4 className="font-medium text-white">
                     Audio Feedback
                   </h4>
-                  <p className={`text-sm ${
-                    highContrast ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    Sound effects and narration
+                  <p className="text-sm text-gray-400">
+                    Sound effects and narration with clear English pronunciation
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setAudioEnabled(!audioEnabled)}
                 className={`relative w-12 h-6 rounded-full transition-all duration-200 hover:scale-105 ${
-                  audioEnabled ? 'bg-teal' : 'bg-gray-300'
+                  audioEnabled ? 'bg-teal' : 'bg-gray-600'
                 }`}
                 aria-label={`${audioEnabled ? 'Disable' : 'Enable'} audio feedback`}
               >
@@ -220,14 +186,10 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-6 pt-6 border-t border-gray-600">
             <button
               onClick={handleClose}
-              className={`w-full py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 ${
-                highContrast
-                  ? 'bg-white text-black hover:bg-gray-200'
-                  : 'bg-coral text-white hover:bg-coral/80'
-              }`}
+              className="w-full py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 bg-coral text-white hover:bg-coral/80"
             >
               Save Settings
             </button>

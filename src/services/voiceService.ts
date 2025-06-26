@@ -27,55 +27,54 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
   cheerfulChild: {
     id: 'cheerfulChild',
     name: 'Cheerful Child',
-    description: 'A bright, enthusiastic 6-10 year old with boundless energy',
+    description: 'A bright, enthusiastic young voice with boundless energy',
     characteristics: {
-      rate: 1.3,
-      pitch: 1.6,
+      rate: 1.2,
+      pitch: 1.4,
       volume: 0.9,
       voiceGender: 'neutral',
       voiceAge: 'child',
       pauseDuration: 300,
       emphasis: {
-        words: ['wow', 'amazing', 'cool', 'awesome', 'yay', 'hooray'],
-        pitchMultiplier: 1.8,
+        words: ['wow', 'amazing', 'cool', 'awesome', 'wonderful', 'exciting'],
+        pitchMultiplier: 1.6,
         rateMultiplier: 0.8
       }
     },
     samplePhrases: [
-      "Oh wow! This is the BEST story ever!",
+      "Oh wow! This is the best story ever!",
       "Can we read another one? Please, please, please?",
-      "I love adventures! They're so exciting!"
+      "I love adventures! They are so exciting!"
     ],
     mannerisms: [
-      'Giggles between sentences',
+      'Enthusiastic and energetic delivery',
       'Emphasizes exciting words with higher pitch',
       'Speaks quickly when excited',
-      'Uses lots of exclamation in tone'
+      'Uses clear, joyful pronunciation'
     ]
   },
 
   regalPrincess: {
     id: 'regalPrincess',
     name: 'Regal Princess',
-    description: 'An elegant, refined princess with perfect pronunciation and grace',
+    description: 'An elegant, refined voice with perfect pronunciation and grace',
     characteristics: {
       rate: 0.8,
-      pitch: 1.3,
+      pitch: 1.2,
       volume: 0.8,
       voiceGender: 'female',
       voiceAge: 'young',
-      accent: 'british',
       pauseDuration: 500,
       emphasis: {
-        words: ['royal', 'magnificent', 'elegant', 'gracious', 'noble'],
-        pitchMultiplier: 1.2,
+        words: ['royal', 'magnificent', 'elegant', 'gracious', 'noble', 'beautiful'],
+        pitchMultiplier: 1.1,
         rateMultiplier: 0.7
       }
     },
     samplePhrases: [
-      "Good evening, dear subjects. It is my honour to share this tale with you.",
+      "Good evening, dear friends. It is my honor to share this tale with you.",
       "One must always remember the importance of kindness and grace.",
-      "In the royal gardens, where roses bloom eternal..."
+      "In the royal gardens, where roses bloom eternal and dreams come true."
     ],
     mannerisms: [
       'Speaks with measured, deliberate pace',
@@ -88,7 +87,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
   elderlyWise: {
     id: 'elderlyWise',
     name: 'Elderly Storyteller',
-    description: 'A wise 70+ year old with gentle tremor and years of wisdom',
+    description: 'A wise, gentle voice with years of experience and warmth',
     characteristics: {
       rate: 0.7,
       pitch: 0.9,
@@ -97,20 +96,20 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       voiceAge: 'elderly',
       pauseDuration: 800,
       emphasis: {
-        words: ['remember', 'wisdom', 'long ago', 'in my time', 'experience'],
+        words: ['remember', 'wisdom', 'long ago', 'experience', 'learned', 'important'],
         pitchMultiplier: 0.9,
         rateMultiplier: 0.6
       }
     },
     samplePhrases: [
-      "Ah, yes... I remember a tale from long, long ago...",
+      "Ah, yes... I remember a tale from long, long ago.",
       "Listen carefully, young ones, for this story holds great wisdom.",
       "In my many years, I have learned that true magic comes from the heart."
     ],
     mannerisms: [
-      'Slight vocal tremor on longer words',
-      'Thoughtful pauses mid-sentence',
       'Gentle, grandfatherly tone',
+      'Thoughtful pauses mid-sentence',
+      'Warm, caring delivery',
       'Emphasizes life lessons with slower pace'
     ]
   },
@@ -118,7 +117,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
   boomingWizard: {
     id: 'boomingWizard',
     name: 'Booming Wizard',
-    description: 'A powerful wizard with deep, resonant voice and magical authority',
+    description: 'A powerful voice with deep, resonant tones and magical authority',
     characteristics: {
       rate: 0.9,
       pitch: 0.6,
@@ -127,13 +126,13 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       voiceAge: 'adult',
       pauseDuration: 600,
       emphasis: {
-        words: ['magic', 'spell', 'enchantment', 'power', 'ancient', 'mystical'],
+        words: ['magic', 'spell', 'enchantment', 'power', 'ancient', 'mystical', 'behold'],
         pitchMultiplier: 0.5,
         rateMultiplier: 0.5
       }
     },
     samplePhrases: [
-      "BEHOLD! The ancient magic awakens from its slumber!",
+      "Behold! The ancient magic awakens from its slumber!",
       "By the power of the seven stars, I command thee!",
       "Young apprentice, the secrets of magic are not to be taken lightly."
     ],
@@ -141,75 +140,74 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       'Deep, resonant bass tones',
       'Dramatic pauses before magical words',
       'Authoritative, commanding presence',
-      'Slight echo effect on important pronouncements'
+      'Rich, theatrical delivery'
     ]
   },
 
   squeakyFairy: {
     id: 'squeakyFairy',
     name: 'Excited Fairy',
-    description: 'A tiny, high-pitched fairy with infectious enthusiasm',
+    description: 'A tiny, high-pitched voice with infectious enthusiasm',
     characteristics: {
-      rate: 1.5,
-      pitch: 1.9,
+      rate: 1.4,
+      pitch: 1.8,
       volume: 0.8,
       voiceGender: 'female',
       voiceAge: 'child',
       pauseDuration: 200,
       emphasis: {
-        words: ['sparkle', 'glitter', 'magic', 'tiny', 'flutter', 'shimmer'],
-        pitchMultiplier: 2.0,
-        rateMultiplier: 1.8
+        words: ['sparkle', 'glitter', 'magic', 'tiny', 'flutter', 'shimmer', 'wonderful'],
+        pitchMultiplier: 1.9,
+        rateMultiplier: 1.6
       }
     },
     samplePhrases: [
-      "Tee-hee! Look at all the sparkly magic dust!",
+      "Oh my! Look at all the sparkly magic dust!",
       "Flutter, flutter! I can make flowers bloom with just a touch!",
       "Oh my stars! This is the most magical day ever!"
     ],
     mannerisms: [
       'Very high, bell-like voice',
       'Quick, excited speech patterns',
-      'Giggles and tinkles between words',
+      'Light, airy delivery',
       'Emphasizes magical words with extra pitch'
     ]
   },
 
-  gruffPirate: {
-    id: 'gruffPirate',
-    name: 'Gruff Pirate',
-    description: 'A weathered sea captain with rough accent and nautical flair',
+  adventurousCaptain: {
+    id: 'adventurousCaptain',
+    name: 'Adventurous Captain',
+    description: 'A confident sea captain with clear, commanding voice',
     characteristics: {
-      rate: 1.1,
-      pitch: 0.7,
+      rate: 1.0,
+      pitch: 0.8,
       volume: 0.9,
       voiceGender: 'male',
       voiceAge: 'adult',
-      accent: 'pirate',
       pauseDuration: 400,
       emphasis: {
-        words: ['arrr', 'matey', 'treasure', 'ship', 'sea', 'adventure'],
-        pitchMultiplier: 0.6,
+        words: ['adventure', 'treasure', 'ship', 'sea', 'journey', 'brave', 'courage'],
+        pitchMultiplier: 0.7,
         rateMultiplier: 0.8
       }
     },
     samplePhrases: [
-      "Arrr, matey! Gather 'round for a tale of the seven seas!",
-      "Shiver me timbers! That be the finest treasure I ever did see!",
-      "Yo ho ho! Every pirate needs a good adventure, savvy?"
+      "Ahoy there, friends! Gather around for a tale of the seven seas!",
+      "Every great adventure begins with a single step onto the ship!",
+      "The treasure we seek is not gold, but the friends we make along the way!"
     ],
     mannerisms: [
-      'Rough, gravelly voice quality',
-      'Drops letters from words (\'round, \'tis)',
-      'Nautical expressions and exclamations',
-      'Confident, swaggering delivery'
+      'Confident, commanding voice',
+      'Clear, nautical delivery',
+      'Inspiring and motivational tone',
+      'Strong, adventurous spirit'
     ]
   },
 
   friendlyRobot: {
     id: 'friendlyRobot',
     name: 'Friendly Robot',
-    description: 'A helpful AI companion with mechanical precision and warmth',
+    description: 'A helpful AI companion with precise pronunciation and warmth',
     characteristics: {
       rate: 1.0,
       pitch: 1.1,
@@ -218,21 +216,21 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       voiceAge: 'adult',
       pauseDuration: 300,
       emphasis: {
-        words: ['compute', 'analyze', 'process', 'data', 'system', 'function'],
+        words: ['compute', 'analyze', 'process', 'data', 'system', 'function', 'helpful'],
         pitchMultiplier: 1.0,
         rateMultiplier: 0.9
       }
     },
     samplePhrases: [
-      "BEEP BOOP! Story processing complete. Initiating narrative sequence.",
-      "According to my calculations, this adventure has a 99.7% chance of being amazing!",
-      "ERROR: Sadness not found. Happiness levels at maximum capacity!"
+      "Story processing complete. Initiating narrative sequence.",
+      "According to my calculations, this adventure has a ninety-nine percent chance of being amazing!",
+      "Happiness levels at maximum capacity! Ready to begin story time!"
     ],
     mannerisms: [
       'Precise, measured speech patterns',
-      'Occasional mechanical sound effects',
       'Technical terminology mixed with emotion',
-      'Consistent rhythm and timing'
+      'Consistent rhythm and timing',
+      'Warm, helpful delivery'
     ]
   },
 
@@ -248,7 +246,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       voiceAge: 'adult',
       pauseDuration: 600,
       emphasis: {
-        words: ['once upon a time', 'long ago', 'legend', 'tale', 'story', 'moral'],
+        words: ['once upon a time', 'long ago', 'legend', 'tale', 'story', 'moral', 'remember'],
         pitchMultiplier: 1.1,
         rateMultiplier: 0.8
       }
@@ -266,33 +264,33 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     ]
   },
 
-  sillyMonster: {
-    id: 'sillyMonster',
-    name: 'Silly Monster',
-    description: 'A goofy, lovable monster with playful growls and silly sounds',
+  playfulFriend: {
+    id: 'playfulFriend',
+    name: 'Playful Friend',
+    description: 'A fun, energetic voice perfect for silly stories and games',
     characteristics: {
-      rate: 1.2,
-      pitch: 0.8,
+      rate: 1.1,
+      pitch: 1.2,
       volume: 0.9,
       voiceGender: 'neutral',
-      voiceAge: 'adult',
+      voiceAge: 'young',
       pauseDuration: 350,
       emphasis: {
-        words: ['roar', 'growl', 'monster', 'silly', 'funny', 'giggle'],
-        pitchMultiplier: 0.7,
-        rateMultiplier: 1.3
+        words: ['fun', 'silly', 'funny', 'laugh', 'play', 'game', 'giggle'],
+        pitchMultiplier: 1.3,
+        rateMultiplier: 1.2
       }
     },
     samplePhrases: [
-      "ROAAAAR! But don't worry, I'm just a silly monster who loves cookies!",
-      "Grr-giggle! I may look scary, but I give the best monster hugs!",
-      "Nom nom nom! Stories taste even better than my favorite snacks!"
+      "Hey there, friend! Ready for some fun and silly adventures?",
+      "This story is going to make you laugh and smile so much!",
+      "Let's play along with the characters and see what happens next!"
     ],
     mannerisms: [
-      'Playful growls and roars',
-      'Exaggerated expressions',
-      'Mix of scary and silly tones',
-      'Lots of sound effects and onomatopoeia'
+      'Playful, energetic delivery',
+      'Friendly, approachable tone',
+      'Emphasizes fun and humor',
+      'Interactive, engaging style'
     ]
   },
 
@@ -308,7 +306,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       voiceAge: 'adult',
       pauseDuration: 700,
       emphasis: {
-        words: ['nature', 'peaceful', 'gentle', 'forest', 'stream', 'whisper'],
+        words: ['nature', 'peaceful', 'gentle', 'forest', 'stream', 'whisper', 'calm'],
         pitchMultiplier: 0.9,
         rateMultiplier: 0.7
       }
@@ -362,24 +360,40 @@ class VoiceService {
       if (exactMatch) return exactMatch;
     }
 
-    // Filter by gender and age preferences
+    // Prioritize English voices with standard pronunciation
     let candidates = this.availableVoices.filter(voice => {
+      const name = voice.name.toLowerCase();
+      const lang = voice.lang.toLowerCase();
+      
+      // Prefer English voices
+      if (!lang.includes('en')) return false;
+      
+      // Prefer US or UK English for standard pronunciation
+      if (lang.includes('en-us') || lang.includes('en-gb') || lang.includes('en-au')) {
+        return true;
+      }
+      
+      // Accept other English variants
+      return lang.startsWith('en');
+    });
+
+    // If no English voices found, use all voices
+    if (candidates.length === 0) {
+      candidates = this.availableVoices;
+    }
+
+    // Filter by gender and age preferences within English voices
+    const filteredCandidates = candidates.filter(voice => {
       const name = voice.name.toLowerCase();
       
       // Gender filtering
       if (characteristics.voiceGender === 'female') {
-        if (!name.includes('female') && !name.includes('woman') && !name.includes('girl')) {
-          // Check if it's explicitly male
-          if (name.includes('male') || name.includes('man') || name.includes('boy')) {
-            return false;
-          }
+        if (name.includes('male') && !name.includes('female')) {
+          return false;
         }
       } else if (characteristics.voiceGender === 'male') {
-        if (!name.includes('male') && !name.includes('man') && !name.includes('boy')) {
-          // Check if it's explicitly female
-          if (name.includes('female') || name.includes('woman') || name.includes('girl')) {
-            return false;
-          }
+        if (name.includes('female') && !name.includes('male')) {
+          return false;
         }
       }
 
@@ -391,25 +405,26 @@ class VoiceService {
       return true;
     });
 
-    // If no candidates found, use all voices
-    if (candidates.length === 0) {
-      candidates = this.availableVoices;
-    }
+    // Use filtered candidates if available, otherwise use all English candidates
+    const finalCandidates = filteredCandidates.length > 0 ? filteredCandidates : candidates;
 
-    // Prefer local voices over network voices
-    const localVoices = candidates.filter(voice => voice.localService);
+    // Prefer local voices over network voices for better performance
+    const localVoices = finalCandidates.filter(voice => voice.localService);
     if (localVoices.length > 0) {
-      candidates = localVoices;
+      return localVoices[0];
     }
 
     // Return the first suitable candidate
-    return candidates[0] || this.availableVoices[0];
+    return finalCandidates[0] || this.availableVoices[0];
   }
 
   private preprocessText(text: string, personality: VoicePersonality): string {
     let processedText = text;
 
-    // Add emphasis to specific words
+    // Ensure standard English pronunciation - remove any accent modifications
+    // Keep text clean and use standard spelling
+
+    // Add emphasis to specific words (but maintain standard pronunciation)
     if (personality.characteristics.emphasis) {
       personality.characteristics.emphasis.words.forEach(word => {
         const regex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -417,20 +432,16 @@ class VoiceService {
       });
     }
 
-    // Add character-specific modifications
+    // Character-specific modifications (keeping standard English)
     switch (personality.id) {
-      case 'gruffPirate':
-        processedText = processedText.replace(/\bthe\b/g, "th'");
-        processedText = processedText.replace(/\baround\b/g, "'round");
-        processedText = processedText.replace(/\bit is\b/g, "'tis");
-        break;
-      
       case 'friendlyRobot':
-        processedText = `BEEP. ${processedText}. BOOP.`;
+        // Add subtle robot-like pauses but keep standard pronunciation
+        processedText = `${processedText}`;
         break;
       
-      case 'sillyMonster':
-        processedText = processedText.replace(/!/g, ' ROAR!');
+      case 'playfulFriend':
+        // Add enthusiasm but maintain clear pronunciation
+        processedText = processedText.replace(/!/g, '!');
         break;
     }
 
@@ -462,10 +473,11 @@ class VoiceService {
       utterance.pitch = characteristics.pitch;
       utterance.volume = characteristics.volume;
 
-      // Find and set the best voice
+      // Find and set the best English voice
       const bestVoice = this.findBestVoice(characteristics);
       if (bestVoice) {
         utterance.voice = bestVoice;
+        console.log('🎤 Using voice:', bestVoice.name, 'Language:', bestVoice.lang);
       }
 
       // Set up event handlers
@@ -548,11 +560,10 @@ class VoiceService {
     if (character) {
       const char = character.toLowerCase();
       if (char.includes('princess')) return 'regalPrincess';
-      if (char.includes('pirate')) return 'gruffPirate';
+      if (char.includes('captain') || char.includes('pirate')) return 'adventurousCaptain';
       if (char.includes('wizard') || char.includes('mage')) return 'boomingWizard';
       if (char.includes('fairy')) return 'squeakyFairy';
       if (char.includes('robot')) return 'friendlyRobot';
-      if (char.includes('monster')) return 'sillyMonster';
     }
 
     // Content-based recommendations
@@ -564,6 +575,9 @@ class VoiceService {
     }
     if (content.includes('adventure') || content.includes('exciting')) {
       return 'cheerfulChild';
+    }
+    if (content.includes('funny') || content.includes('silly') || content.includes('laugh')) {
+      return 'playfulFriend';
     }
     if (content.includes('wise') || content.includes('lesson') || content.includes('moral')) {
       return 'elderlyWise';

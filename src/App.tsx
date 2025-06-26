@@ -117,7 +117,7 @@ function AppContent() {
         animationSpeed: 1
       }}
     >
-      <div className={`min-h-screen transition-all duration-300 relative overflow-visible ${
+      <div className={`min-h-screen transition-all duration-300 relative overflow-visible bg-gray-900 ${
         textSize === 'small' ? 'text-sm' : textSize === 'large' ? 'text-lg' : 'text-base'
       }`}>
         
@@ -131,7 +131,7 @@ function AppContent() {
         
         {/* High contrast overlay when needed - Base Layer (z-1) */}
         {highContrast && (
-          <div className="fixed inset-0 bg-black/70 z-1" />
+          <div className="fixed inset-0 bg-black/80 z-1" />
         )}
         
         {/* 3D Character - Interactive Character Layer (z-15) */}
@@ -145,28 +145,20 @@ function AppContent() {
         />
 
         {/* Header - Navigation Layer (z-10) */}
-        <header className={`${
-          highContrast ? 'bg-gray-900 border-white' : 'bg-white/80 border-white/20'
-        } backdrop-blur-sm border-b sticky top-0 z-10 relative`}>
+        <header className="bg-gray-800/90 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-10 relative">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-coral to-yellow rounded-full flex items-center justify-center">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
-                <h1 className={`text-2xl font-bold ${
-                  highContrast ? 'text-white' : 'text-gray-800'
-                }`}>Story Magic</h1>
+                <h1 className="text-2xl font-bold text-white">Story Magic</h1>
               </div>
               
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setAudioEnabled(!audioEnabled)}
-                  className={`p-2 rounded-full transition-all duration-200 ${
-                    highContrast 
-                      ? 'bg-white text-black hover:bg-gray-200' 
-                      : 'bg-coral hover:bg-coral/80 text-white'
-                  }`}
+                  className="p-2 rounded-full transition-all duration-200 bg-coral hover:bg-coral/80 text-white"
                   aria-label={audioEnabled ? 'Disable audio' : 'Enable audio'}
                 >
                   {audioEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
@@ -174,38 +166,28 @@ function AppContent() {
                 
                 <button
                   onClick={() => setIsAccessibilityOpen(!isAccessibilityOpen)}
-                  className={`p-2 rounded-full transition-all duration-200 ${
-                    highContrast 
-                      ? 'bg-white text-black hover:bg-gray-200' 
-                      : 'bg-teal hover:bg-teal/80 text-white'
-                  }`}
+                  className="p-2 rounded-full transition-all duration-200 bg-teal hover:bg-teal/80 text-white"
                   aria-label="Accessibility settings"
                 >
                   <Settings className="w-5 h-5" />
                 </button>
 
-                <AuthButton highContrast={highContrast} />
+                <AuthButton highContrast={false} />
               </div>
             </div>
           </div>
         </header>
 
         {/* Navigation - Navigation Layer (z-10) */}
-        <nav className={`${
-          highContrast ? 'bg-gray-800' : 'bg-white/60'
-        } backdrop-blur-sm border-b border-white/20 relative z-2`}>
+        <nav className="bg-gray-800/60 backdrop-blur-sm border-b border-gray-700 relative z-2">
           <div className="container mx-auto px-4 py-3">
             <div className="flex justify-center space-x-4">
               <button
                 onClick={() => setCurrentView('generator')}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
                   currentView === 'generator'
-                    ? highContrast
-                      ? 'bg-white text-black'
-                      : 'bg-coral text-white shadow-lg'
-                    : highContrast
-                      ? 'text-white hover:bg-gray-700'
-                      : 'text-gray-600 hover:bg-white/50'
+                    ? 'bg-coral text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
                 <BookOpen className="w-5 h-5" />
@@ -220,12 +202,8 @@ function AppContent() {
                 }}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
                   currentView === 'library'
-                    ? highContrast
-                      ? 'bg-white text-black'
-                      : 'bg-teal text-white shadow-lg'
-                    : highContrast
-                      ? 'text-white hover:bg-gray-700'
-                      : 'text-gray-600 hover:bg-white/50'
+                    ? 'bg-teal text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
                 <Library className="w-5 h-5" />

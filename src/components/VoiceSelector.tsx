@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, Play, Pause, RotateCcw, Mic, User, Crown, Zap, Sparkles, Anchor, Bot, BookOpen, Ghost, Leaf } from 'lucide-react';
+import { Volume2, Play, Pause, RotateCcw, Mic, User, Crown, Zap, Sparkles, Anchor, Bot, BookOpen, Smile, Leaf } from 'lucide-react';
 import { voiceService, voicePersonalities, VoicePersonality } from '../services/voiceService';
 
 interface VoiceSelectorProps {
@@ -15,10 +15,10 @@ const voiceIcons: Record<string, React.ComponentType<any>> = {
   elderlyWise: BookOpen,
   boomingWizard: Zap,
   squeakyFairy: Sparkles,
-  gruffPirate: Anchor,
+  adventurousCaptain: Anchor,
   friendlyRobot: Bot,
   wiseStoryteller: BookOpen,
-  sillyMonster: Ghost,
+  playfulFriend: Smile,
   calmNatureGuide: Leaf
 };
 
@@ -62,27 +62,25 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
 
   const getVoiceColor = (voiceId: string) => {
     const colors: Record<string, string> = {
-      cheerfulChild: 'from-yellow-400 to-orange-400',
-      regalPrincess: 'from-purple-400 to-pink-400',
-      elderlyWise: 'from-amber-400 to-brown-400',
-      boomingWizard: 'from-indigo-400 to-purple-400',
-      squeakyFairy: 'from-pink-400 to-rose-400',
-      gruffPirate: 'from-blue-400 to-teal-400',
-      friendlyRobot: 'from-gray-400 to-blue-400',
-      wiseStoryteller: 'from-green-400 to-teal-400',
-      sillyMonster: 'from-red-400 to-orange-400',
-      calmNatureGuide: 'from-green-400 to-emerald-400'
+      cheerfulChild: 'from-amber-500 to-orange-500',
+      regalPrincess: 'from-purple-500 to-pink-500',
+      elderlyWise: 'from-amber-600 to-orange-600',
+      boomingWizard: 'from-indigo-500 to-purple-500',
+      squeakyFairy: 'from-pink-500 to-rose-500',
+      adventurousCaptain: 'from-blue-500 to-teal-500',
+      friendlyRobot: 'from-gray-500 to-blue-500',
+      wiseStoryteller: 'from-green-500 to-teal-500',
+      playfulFriend: 'from-red-500 to-orange-500',
+      calmNatureGuide: 'from-green-500 to-emerald-500'
     };
-    return colors[voiceId] || 'from-gray-400 to-gray-600';
+    return colors[voiceId] || 'from-gray-500 to-gray-600';
   };
 
   return (
-    <div className={`${
-      highContrast ? 'bg-gray-800 border-white' : 'bg-white/80 border-white/30'
-    } backdrop-blur-sm rounded-2xl p-6 border shadow-lg ${disabled ? 'opacity-50' : ''}`}>
+    <div className="bg-gray-800 border border-gray-700 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
       <div className="flex items-center space-x-3 mb-6">
-        <Volume2 className={`w-6 h-6 ${highContrast ? 'text-white' : 'text-coral'}`} />
-        <h3 className={`text-2xl font-bold ${highContrast ? 'text-white' : 'text-gray-800'}`}>
+        <Volume2 className="w-6 h-6 text-coral" />
+        <h3 className="text-2xl font-bold text-white">
           Choose Reading Voice
         </h3>
       </div>
@@ -99,13 +97,9 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
               key={personality.id}
               className={`relative rounded-xl transition-all duration-300 ${
                 isSelected
-                  ? highContrast
-                    ? 'bg-white text-black shadow-lg scale-105'
-                    : `bg-gradient-to-br ${getVoiceColor(personality.id)} text-white shadow-lg scale-105`
-                  : highContrast
-                    ? 'bg-gray-700 text-white hover:bg-gray-600'
-                    : 'bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300'
-              } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                  ? `bg-gradient-to-br ${getVoiceColor(personality.id)} text-white shadow-lg scale-105`
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
             >
               {/* Main Voice Card */}
               <div
@@ -115,15 +109,13 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isSelected && !highContrast ? 'bg-white/20' : ''
+                      isSelected ? 'bg-white/20' : 'bg-gray-600'
                     }`}>
                       <IconComponent className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="font-bold text-sm">{personality.name}</h4>
-                      <p className={`text-xs opacity-80 ${
-                        isSelected && !highContrast ? 'text-white' : ''
-                      }`}>
+                      <p className="text-xs opacity-80">
                         {personality.description.substring(0, 40)}...
                       </p>
                     </div>
@@ -139,11 +131,9 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                     className={`p-2 rounded-full transition-all duration-200 ${
                       isTesting
                         ? 'bg-red-500 text-white'
-                        : isSelected && !highContrast
+                        : isSelected
                           ? 'bg-white/20 hover:bg-white/30'
-                          : highContrast
-                            ? 'bg-gray-600 hover:bg-gray-500 text-white'
-                            : 'bg-white/50 hover:bg-white/70 text-gray-700'
+                          : 'bg-gray-600 hover:bg-gray-500 text-white'
                     }`}
                     aria-label={isTesting ? 'Stop voice test' : 'Test voice'}
                   >
@@ -158,20 +148,12 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                 {/* Voice Characteristics Preview */}
                 <div className="flex items-center space-x-2 text-xs">
                   <span className={`px-2 py-1 rounded-full ${
-                    isSelected && !highContrast
-                      ? 'bg-white/20'
-                      : highContrast
-                        ? 'bg-gray-600'
-                        : 'bg-white/60'
+                    isSelected ? 'bg-white/20' : 'bg-gray-600'
                   }`}>
                     Speed: {personality.characteristics.rate}x
                   </span>
                   <span className={`px-2 py-1 rounded-full ${
-                    isSelected && !highContrast
-                      ? 'bg-white/20'
-                      : highContrast
-                        ? 'bg-gray-600'
-                        : 'bg-white/60'
+                    isSelected ? 'bg-white/20' : 'bg-gray-600'
                   }`}>
                     Pitch: {personality.characteristics.pitch}x
                   </span>
@@ -184,11 +166,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                     setExpandedVoice(isExpanded ? null : personality.id);
                   }}
                   className={`mt-3 w-full text-xs py-1 rounded transition-all duration-200 ${
-                    isSelected && !highContrast
-                      ? 'bg-white/20 hover:bg-white/30'
-                      : highContrast
-                        ? 'bg-gray-600 hover:bg-gray-500'
-                        : 'bg-white/50 hover:bg-white/70'
+                    isSelected ? 'bg-white/20 hover:bg-white/30' : 'bg-gray-600 hover:bg-gray-500'
                   }`}
                 >
                   {isExpanded ? 'Show Less' : 'Show Details'}
@@ -198,11 +176,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
               {/* Expanded Details */}
               {isExpanded && (
                 <div className={`border-t p-4 ${
-                  isSelected && !highContrast
-                    ? 'border-white/20'
-                    : highContrast
-                      ? 'border-gray-600'
-                      : 'border-gray-300'
+                  isSelected ? 'border-white/20' : 'border-gray-600'
                 }`}>
                   <div className="space-y-3">
                     {/* Sample Phrases */}
@@ -210,9 +184,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                       <h5 className="font-semibold text-sm mb-2">Sample Phrases:</h5>
                       <div className="space-y-1">
                         {personality.samplePhrases.slice(0, 2).map((phrase, index) => (
-                          <p key={index} className={`text-xs italic ${
-                            isSelected && !highContrast ? 'text-white/80' : 'opacity-80'
-                          }`}>
+                          <p key={index} className="text-xs italic opacity-80">
                             "{phrase}"
                           </p>
                         ))}
@@ -227,11 +199,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                           <span
                             key={index}
                             className={`text-xs px-2 py-1 rounded-full ${
-                              isSelected && !highContrast
-                                ? 'bg-white/20'
-                                : highContrast
-                                  ? 'bg-gray-600'
-                                  : 'bg-white/60'
+                              isSelected ? 'bg-white/20' : 'bg-gray-600'
                             }`}
                           >
                             {mannerism}
@@ -256,16 +224,10 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
 
       {/* Voice Testing Status */}
       {isTestingVoice && (
-        <div className={`mt-4 p-3 rounded-lg ${
-          highContrast ? 'bg-gray-700' : 'bg-blue-50'
-        }`}>
+        <div className="mt-4 p-3 rounded-lg bg-gray-700">
           <div className="flex items-center space-x-2">
-            <Volume2 className={`w-4 h-4 animate-pulse ${
-              highContrast ? 'text-white' : 'text-blue-600'
-            }`} />
-            <span className={`text-sm ${
-              highContrast ? 'text-white' : 'text-blue-800'
-            }`}>
+            <Volume2 className="w-4 h-4 animate-pulse text-blue-400" />
+            <span className="text-sm text-white">
               Testing {voicePersonalities[isTestingVoice]?.name} voice...
             </span>
           </div>
@@ -273,11 +235,10 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
       )}
 
       {/* Usage Tip */}
-      <div className={`mt-4 p-3 rounded-lg text-xs ${
-        highContrast ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-600'
-      }`}>
+      <div className="mt-4 p-3 rounded-lg text-xs bg-gray-700 text-gray-300">
         <p>
-          💡 <strong>Tip:</strong> Each voice has unique characteristics perfect for different story types. 
+          💡 <strong>Tip:</strong> All voices use clear, standard English pronunciation. 
+          Each voice has unique characteristics perfect for different story types. 
           Try the test button to hear how each voice sounds before selecting!
         </p>
       </div>

@@ -145,19 +145,19 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
   const getAgeRangeColor = (ageRange: string) => {
     switch (ageRange) {
-      case '4-6': return 'bg-green-100 text-green-800';
-      case '7-9': return 'bg-blue-100 text-blue-800';
-      case '10-12': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case '4-6': return 'bg-green-600 text-green-100';
+      case '7-9': return 'bg-blue-600 text-blue-100';
+      case '10-12': return 'bg-purple-600 text-purple-100';
+      default: return 'bg-gray-600 text-gray-100';
     }
   };
 
   const getLengthColor = (length: string) => {
     switch (length) {
-      case 'short': return 'bg-yellow-100 text-yellow-800';
-      case 'medium': return 'bg-orange-100 text-orange-800';
-      case 'long': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'short': return 'bg-yellow-600 text-yellow-100';
+      case 'medium': return 'bg-orange-600 text-orange-100';
+      case 'long': return 'bg-red-600 text-red-100';
+      default: return 'bg-gray-600 text-gray-100';
     }
   };
 
@@ -166,16 +166,12 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     console.error('❌ Story content is empty or invalid');
     return (
       <div className="max-w-4xl mx-auto">
-        <div className={`text-center p-8 rounded-2xl ${
-          highContrast ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
-        }`}>
+        <div className="text-center p-8 rounded-2xl bg-gray-800 text-white border border-gray-700">
           <h2 className="text-2xl font-bold mb-4">Story Not Available</h2>
           <p className="mb-4">The story content could not be loaded.</p>
           <button
             onClick={onBack}
-            className={`px-6 py-3 rounded-lg ${
-              highContrast ? 'bg-white text-black' : 'bg-coral text-white'
-            }`}
+            className="px-6 py-3 rounded-lg bg-coral text-white hover:bg-coral/80"
           >
             Go Back
           </button>
@@ -190,11 +186,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       <div className="flex items-center justify-between mb-8">
         <button
           onClick={onBack}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
-            highContrast
-              ? 'bg-white text-black hover:bg-gray-200'
-              : 'bg-white/80 text-gray-700 hover:bg-white shadow-md hover:shadow-lg'
-          }`}
+          className="flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 bg-gray-700 text-white hover:bg-gray-600 shadow-md hover:shadow-lg"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
@@ -209,9 +201,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
                 className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
                   showVoiceSelector
                     ? 'bg-purple-500 text-white'
-                    : highContrast
-                      ? 'bg-white text-black hover:bg-gray-200'
-                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200 shadow-md hover:shadow-lg'
+                    : 'bg-purple-600 text-white hover:bg-purple-500 shadow-md hover:shadow-lg'
                 }`}
               >
                 <Settings className="w-5 h-5" />
@@ -222,11 +212,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               <button
                 onClick={handleReadAloud}
                 disabled={isReading && voiceService.isSpeaking() && !voiceService.isPaused()}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
-                  highContrast
-                    ? 'bg-white text-black hover:bg-gray-200'
-                    : 'bg-teal text-white hover:bg-teal/80 shadow-md hover:shadow-lg'
-                } disabled:opacity-50`}
+                className="flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 bg-teal text-white hover:bg-teal/80 shadow-md hover:shadow-lg disabled:opacity-50"
               >
                 {isReading && !voiceService.isPaused() ? (
                   <Pause className="w-5 h-5" />
@@ -241,11 +227,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               {isReading && (
                 <button
                   onClick={handleStop}
-                  className={`p-2 rounded-full transition-all duration-200 ${
-                    highContrast
-                      ? 'bg-white text-black hover:bg-gray-200'
-                      : 'bg-gray-500 text-white hover:bg-gray-600'
-                  }`}
+                  className="p-2 rounded-full transition-all duration-200 bg-gray-600 text-white hover:bg-gray-500"
                 >
                   <RotateCcw className="w-5 h-5" />
                 </button>
@@ -258,9 +240,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
               isSaved
                 ? 'bg-green-500 text-white'
-                : highContrast
-                  ? 'bg-white text-black hover:bg-gray-200'
-                  : 'bg-coral text-white hover:bg-coral/80 shadow-md hover:shadow-lg'
+                : 'bg-coral text-white hover:bg-coral/80 shadow-md hover:shadow-lg'
             }`}
           >
             {isSaved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
@@ -283,24 +263,16 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
       {/* Reading Progress Bar */}
       {isReading && readingProgress > 0 && (
-        <div className={`mb-6 p-4 rounded-xl ${
-          highContrast ? 'bg-gray-800' : 'bg-blue-50'
-        }`}>
+        <div className="mb-6 p-4 rounded-xl bg-gray-800 border border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${
-              highContrast ? 'text-white' : 'text-blue-800'
-            }`}>
+            <span className="text-sm font-medium text-blue-300">
               Reading Progress
             </span>
-            <span className={`text-sm ${
-              highContrast ? 'text-gray-400' : 'text-blue-600'
-            }`}>
+            <span className="text-sm text-blue-400">
               {Math.round(readingProgress)}%
             </span>
           </div>
-          <div className={`w-full bg-gray-200 rounded-full h-2 ${
-            highContrast ? 'bg-gray-700' : ''
-          }`}>
+          <div className="w-full bg-gray-700 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-teal to-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${readingProgress}%` }}
@@ -310,43 +282,29 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       )}
 
       {/* Story Card */}
-      <div className={`${
-        highContrast ? 'bg-gray-800 border-white' : 'bg-white/90 border-white/30'
-      } backdrop-blur-sm rounded-3xl p-8 border shadow-xl`}>
+      <div className="bg-gray-800/90 backdrop-blur-sm rounded-3xl p-8 border border-gray-700 shadow-xl">
         <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold mb-4 ${
-            highContrast ? 'text-white' : 'text-gray-800'
-          }`}>
+          <h1 className="text-4xl font-bold mb-4 text-white">
             {story.title}
           </h1>
           
           <div className="flex justify-center flex-wrap gap-3 text-sm mb-4">
-            <span className={`px-3 py-1 rounded-full ${
-              highContrast ? 'bg-gray-700 text-white' : 'bg-purple-100 text-purple-800'
-            }`}>
+            <span className="px-3 py-1 rounded-full bg-purple-600 text-purple-100">
               Character: {story.characterName || story.character}
             </span>
-            <span className={`px-3 py-1 rounded-full ${
-              highContrast ? 'bg-gray-700 text-white' : 'bg-blue-100 text-blue-800'
-            }`}>
+            <span className="px-3 py-1 rounded-full bg-blue-600 text-blue-100">
               Setting: {story.setting}
             </span>
-            <span className={`px-3 py-1 rounded-full ${
-              highContrast ? 'bg-gray-700 text-white' : 'bg-green-100 text-green-800'
-            }`}>
+            <span className="px-3 py-1 rounded-full bg-green-600 text-green-100">
               Theme: {story.theme}
             </span>
             {story.ageRange && (
-              <span className={`px-3 py-1 rounded-full ${
-                highContrast ? 'bg-gray-700 text-white' : getAgeRangeColor(story.ageRange)
-              }`}>
+              <span className={`px-3 py-1 rounded-full ${getAgeRangeColor(story.ageRange)}`}>
                 Ages: {story.ageRange}
               </span>
             )}
             {story.storyLength && (
-              <span className={`px-3 py-1 rounded-full ${
-                highContrast ? 'bg-gray-700 text-white' : getLengthColor(story.storyLength)
-              }`}>
+              <span className={`px-3 py-1 rounded-full ${getLengthColor(story.storyLength)}`}>
                 Length: {story.storyLength}
               </span>
             )}
@@ -354,18 +312,14 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         </div>
 
         {/* Story Content */}
-        <div className={`prose prose-lg max-w-none leading-relaxed ${
-          highContrast ? 'text-white' : 'text-gray-700'
-        }`}>
+        <div className="prose prose-lg max-w-none leading-relaxed text-gray-100">
           <div className="text-xl leading-loose whitespace-pre-line">
             {words.map((word, index) => (
               <span
                 key={index}
                 className={`${
                   index < currentWordIndex && isReading
-                    ? highContrast
-                      ? 'bg-yellow text-black'
-                      : 'bg-yellow-200 text-gray-900'
+                    ? 'bg-yellow text-black'
                     : ''
                 } transition-colors duration-200`}
               >
@@ -377,22 +331,14 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
         {/* Moral Section */}
         {story.moral && (
-          <div className={`mt-8 p-6 rounded-xl ${
-            highContrast ? 'bg-gray-700 border-white' : 'bg-gradient-to-r from-coral/10 to-yellow/10 border-coral/20'
-          } border-2`}>
+          <div className="mt-8 p-6 rounded-xl bg-gradient-to-r from-coral/20 to-yellow/20 border-2 border-coral/30">
             <div className="flex items-center space-x-3 mb-3">
-              <Award className={`w-6 h-6 ${
-                highContrast ? 'text-white' : 'text-coral'
-              }`} />
-              <h3 className={`text-xl font-bold ${
-                highContrast ? 'text-white' : 'text-gray-800'
-              }`}>
+              <Award className="w-6 h-6 text-coral" />
+              <h3 className="text-xl font-bold text-white">
                 Story Lesson
               </h3>
             </div>
-            <p className={`text-lg italic ${
-              highContrast ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <p className="text-lg italic text-gray-200">
               {story.moral}
             </p>
           </div>
@@ -400,24 +346,18 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
         {/* Audio Controls Info */}
         {audioEnabled && (
-          <div className={`mt-8 p-4 rounded-xl ${
-            highContrast ? 'bg-gray-700' : 'bg-blue-50'
-          }`}>
+          <div className="mt-8 p-4 rounded-xl bg-gray-700 border border-gray-600">
             <div className="flex items-center space-x-2 text-sm">
-              <Volume2 className={`w-4 h-4 ${
-                highContrast ? 'text-white' : 'text-blue-600'
-              }`} />
-              <span className={highContrast ? 'text-white' : 'text-blue-800'}>
-                Choose from 10 unique character voices! Each voice has its own personality and speaking style perfect for different story types.
+              <Volume2 className="w-4 h-4 text-blue-400" />
+              <span className="text-blue-200">
+                Choose from 10 unique character voices! Each voice uses clear, standard English pronunciation with its own personality and speaking style perfect for different story types.
               </span>
             </div>
           </div>
         )}
 
         {/* Debug Info for Story */}
-        <div className={`mt-4 p-3 rounded-lg text-xs ${
-          highContrast ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-500'
-        }`}>
+        <div className="mt-4 p-3 rounded-lg text-xs bg-gray-900 text-gray-400 border border-gray-700">
           <details>
             <summary className="cursor-pointer">📊 Story Stats</summary>
             <div className="mt-2 space-y-1">
