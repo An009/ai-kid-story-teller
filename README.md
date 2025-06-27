@@ -8,7 +8,6 @@
 * **AI-Powered Story Generation**: Generate unique stories based on user-selected preferences.
     * **Customizable Prompts**: Users can specify a hero's name and type, setting, theme, age group, and story length.
     * **Cohere API Integration**: Leverages the Cohere API for rich story content generation.
-* **Interactive 3D Companion**: A charming 3D character that responds to user interactions and guides them through the app.
     * **Dynamic Animations**: The character exhibits various states like idle, welcoming, encouraging, celebrating, guiding, reading, and thoughtful.
     * **Positioning System**: The character adapts its position based on the current view (homepage, sidebar, corner, etc.).
     * **Performance Optimized**: Utilizes CSS 3D transforms, `will-change`, and Intersection Observers for smooth animations.
@@ -98,73 +97,6 @@ npm run dev
 # or
 yarn dev
 ```
-
-## 📂 Project Structure
-
-ai-kid-story-teller/
-├── public/
-├── src/
-│   ├── App.tsx
-│   ├── index.css
-│   ├── main.tsx
-│   ├── components/
-│   │   ├── AccessibilityPanel.tsx
-│   │   ├── AnimatedBackground/
-│   │   │   ├── AnimatedBackground.tsx
-│   │   │   └── AnimatedBackground.css
-│   │   ├── auth/
-│   │   │   ├── AuthButton.tsx
-│   │   │   ├── LoginModal.tsx
-│   │   │   └── SignUpModal.tsx
-│   │   ├── Character3D/
-│   │   │   ├── Character3D.tsx
-│   │   │   ├── Character3D.css
-│   │   │   ├── CharacterIntegration.tsx
-│   │   │   ├── CharacterManager.tsx
-│   │   │   ├── useCharacterAnimations.ts
-│   │   │   ├── types.ts
-│   │   │   └── README.md
-│   │   ├── CharacterSelector.tsx
-│   │   ├── SettingSelector.tsx
-│   │   ├── StoryDisplay.tsx
-│   │   ├── StoryGenerator.tsx
-│   │   ├── StoryLibrary.tsx
-│   │   ├── ThemeSelector.tsx
-│   │   └── VoiceSelector.tsx
-│   ├── contexts/
-│   │   └── AuthContext.tsx
-│   ├── services/
-│   │   ├── authService.ts
-│   │   ├── storyService.ts
-│   │   └── voiceService.ts
-│   ├── types/
-│   │   └── Story.ts
-│   └── utils/
-│       ├── advancedStoryGenerator.ts
-│       └── storyGenerator.ts
-├── supabase/
-│   ├── functions/
-│   │   ├── _shared/cors.ts
-│   │   ├── delete-story/index.ts
-│   │   ├── generate-story/index.ts
-│   │   ├── get-user-stories/index.ts
-│   │   ├── save-story/index.ts
-│   │   └── update-story/index.ts
-│   └── migrations/
-│       ├── 20250622191702_royal_lab.sql
-│       └── 20250623011029_white_spark.sql
-├── .bolt/config.json
-├── .gitignore
-├── index.html
-├── package.json
-├── package-lock.json
-├── postcss.config.js
-├── README.md
-├── tailwind.config.js
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
-└── vite.config.ts
 
 ## 📚 Usage
 
