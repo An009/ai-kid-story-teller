@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { X, Eye, Type, Volume2, VolumeX, Headphones } from 'lucide-react';
 import { soundService } from '../services/soundService';
+import { voiceService } from '../services/voiceService';
 
 interface AccessibilityPanelProps {
   highContrast: boolean;
@@ -26,11 +27,15 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
   const [masterVolume, setMasterVolume] = useState(0.7);
+  const [isVoiceServiceReady, setIsVoiceServiceReady] = useState(false);
 
   // Handle modal open animations and body scroll
   useEffect(() => {
     document.body.classList.add('modal-open');
     setIsClosing(false);
+    
+    // Check voice service status
+    setIsVoiceServiceReady(voiceService.isReady());
     
     // Trigger enter animations
     if (modalRef.current && backdropRef.current) {
@@ -183,7 +188,10 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                     Audio Feedback
                   </h4>
                   <p className="text-sm text-gray-400">
-                    Voice narration with clear English pronunciation
+                    {isVoiceServiceReady 
+                      ? 'ElevenLabs voice narration with crystal-clear pronunciation'
+                      : 'Voice narration (requires ElevenLabs API key)'
+                    }
                   </p>
                 </div>
               </div>
@@ -209,7 +217,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                     Sound Effects
                   </h4>
                   <p className="text-sm text-gray-400">
-                    Immersive ambient sounds and story effects
+                    Dynamic ambient sounds and story effects powered by ElevenLabs
                   </p>
                 </div>
               </div>
@@ -266,15 +274,38 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                 <div className="flex items-start space-x-3">
                   <Headphones className="w-5 h-5 text-blue-400 mt-0.5" />
                   <div>
-                    <h5 className="font-medium text-white mb-1">Enhanced Audio Experience</h5>
+                    <h5 className="font-medium text-white mb-1">
+                      {isVoiceServiceReady ? 'Premium Audio Experience' : 'Audio Configuration Required'}
+                    </h5>
                     <p className="text-sm text-gray-300">
-                      This app features ElevenLabs AI-powered voice synthesis for crystal-clear narration 
-                      and dynamic sound effects that adapt to your story's theme and setting.
+                      {isVoiceServiceReady ? (
+                        'This app features ElevenLabs AI-powered voice synthesis for crystal-clear narration and dynamic sound effects that adapt to your story\'s theme and setting.'
+                      ) : (
+                        'To enable premium voice features, please add your ElevenLabs API key to the environment configuration. This will unlock high-quality voice synthesis and dynamic sound effects.'
+                      )}
                     </p>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* ElevenLabs Status */}
+            <div className={`p-3 rounded-lg border ${
+              isVoiceServiceReady 
+                ? 'bg-green-900 border-green-500' 
+                : 'bg-yellow-900 border-yellow-500'
+            }`}>
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  isVoiceServiceReady ? 'bg-green-400' : 'bg-yellow-400'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  isVoiceServiceReady ? 'text-green-400' : 'text-yellow-400'
+                }`}>
+                  ElevenLabs Service: {isVoiceServiceReady ? 'Ready' : 'Not Configured'}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-600">

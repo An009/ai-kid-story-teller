@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle, Settings, VolumeX } from 'lucide-react';
+import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle, Settings, VolumeX, Loader2 } from 'lucide-react';
 import { Story } from '../types/Story';
 import { voiceService } from '../services/voiceService';
 import { soundService } from '../services/soundService';
@@ -29,6 +29,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
   const [currentAudioTime, setCurrentAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [isVoiceServiceReady, setIsVoiceServiceReady] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const words = story.content.split(' ');
 
@@ -41,26 +43,35 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   });
 
   useEffect(() => {
-    // Get recommended voice based on story content and character
-    const recommendedVoice = voiceService.getRecommendedVoice(story.content, story.character);
-    setSelectedVoice(recommendedVoice);
-    console.log('🎤 Recommended voice for story:', recommendedVoice);
+    // Check if voice service is ready
+    setIsVoiceServiceReady(voiceService.isReady());
+    
+    if (voiceService.isReady()) {
+      // Get recommended voice based on story content and character
+      const recommendedVoice = voiceService.getRecommendedVoice(story.content, story.character);
+      setSelectedVoice(recommendedVoice);
+      console.log('🎤 Recommended voice for story:', recommendedVoice);
 
-    // Play ambient sound for the story setting
-    if (audioEnabled && soundEffectsEnabled) {
-      soundService.playThematicSound(story.theme, story.setting, 'ambient');
+      // Play ambient sound for the story setting
+      if (audioEnabled && soundEffectsEnabled) {
+        soundService.playThematicSound(story.theme, story.setting, 'ambient');
+      }
+    } else {
+      setAudioError('ElevenLabs service is not available. Please check your API key configuration.');
     }
 
     return () => {
       // Cleanup audio when component unmounts
-      voiceService.stop();
+      if (voiceService.isReady()) {
+        voiceService.stop();
+      }
       soundService.stopAll();
     };
   }, [story, audioEnabled, soundEffectsEnabled]);
 
   // Update audio progress for ElevenLabs
   useEffect(() => {
-    if (!voiceService.isElevenLabsEnabled() || !isReading) return;
+    if (!isVoiceServiceReady || !isReading) return;
 
     const updateProgress = () => {
       const currentTime = voiceService.getCurrentTime();
@@ -81,15 +92,17 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
     const interval = setInterval(updateProgress, 100);
     return () => clearInterval(interval);
-  }, [isReading, words.length]);
+  }, [isReading, words.length, isVoiceServiceReady]);
 
   const handleReadAloud = async () => {
-    if (!audioEnabled || !('speechSynthesis' in window && voiceService.isElevenLabsEnabled())) {
-      console.log('🔇 Audio disabled or speech synthesis not available');
+    if (!audioEnabled || !isVoiceServiceReady) {
+      console.log('🔇 Audio disabled or ElevenLabs service not available');
+      setAudioError('Audio service is not available. Please check your configuration.');
       return;
     }
 
     console.log('🔊 Read aloud clicked, isReading:', isReading);
+    setAudioError(null);
 
     if (isReading) {
       if (voiceService.isPaused()) {
@@ -113,32 +126,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
           await soundService.playEmotionalCue('anticipation', 'low');
         }
 
-        // For ElevenLabs, speak the entire story at once
-        if (voiceService.isElevenLabsEnabled()) {
-          await voiceService.speak(story.content, selectedVoice);
-        } else {
-          // For Web Speech API, break into sentences for better control
-          const sentences = story.content.split(/[.!?]+/).filter(s => s.trim());
-          let totalWordsRead = 0;
-          
-          for (let i = 0; i < sentences.length; i++) {
-            const sentence = sentences[i].trim();
-            if (!sentence) continue;
-            
-            const sentenceWords = sentence.split(' ');
-            
-            // Speak each sentence
-            await voiceService.speak(sentence, selectedVoice);
-            
-            // Update progress
-            totalWordsRead += sentenceWords.length;
-            setCurrentWordIndex(totalWordsRead);
-            setReadingProgress((totalWordsRead / words.length) * 100);
-            
-            // Small pause between sentences
-            await new Promise(resolve => setTimeout(resolve, 300));
-          }
-        }
+        // Speak the entire story with ElevenLabs
+        await voiceService.speak(story.content, selectedVoice);
         
         console.log('🎤 Speech completed');
         setIsReading(false);
@@ -155,18 +144,22 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         setIsReading(false);
         setCurrentWordIndex(0);
         setReadingProgress(0);
+        setAudioError(error instanceof Error ? error.message : 'Speech synthesis failed');
       }
     }
   };
 
   const handleStop = () => {
     console.log('⏹️ Stop reading clicked');
-    voiceService.stop();
+    if (isVoiceServiceReady) {
+      voiceService.stop();
+    }
     setIsReading(false);
     setCurrentWordIndex(0);
     setReadingProgress(0);
     setCurrentAudioTime(0);
     setAudioDuration(0);
+    setAudioError(null);
   };
 
   const handleSave = () => {
@@ -192,7 +185,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     console.log('🎤 Voice changed to:', voiceId);
     
     // If currently reading, stop and restart with new voice
-    if (isReading) {
+    if (isReading && isVoiceServiceReady) {
       voiceService.stop();
       setIsReading(false);
       setTimeout(() => {
@@ -257,7 +250,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       <div className="flex items-center justify-between mb-8">
         <button
           onClick={onBack}
-          className="flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 bg-gray-700 text-white hover:bg-gray-600 shadow-md hover:shadow-lg"
+          className="flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 bg-gray-700 text-white hover:bg-gray-600 shadow-md hover:shadow-lg transform hover:scale-105"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
@@ -269,7 +262,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               {/* Sound Effects Toggle */}
               <button
                 onClick={toggleSoundEffects}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 transform hover:scale-105 ${
                   soundEffectsEnabled
                     ? 'bg-green-600 text-white hover:bg-green-500'
                     : 'bg-gray-600 text-white hover:bg-gray-500'
@@ -283,10 +276,13 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               {/* Voice Settings Button */}
               <button
                 onClick={() => setShowVoiceSelector(!showVoiceSelector)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                disabled={!isVoiceServiceReady}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 transform hover:scale-105 ${
                   showVoiceSelector
                     ? 'bg-purple-500 text-white'
-                    : 'bg-purple-600 text-white hover:bg-purple-500 shadow-md hover:shadow-lg'
+                    : isVoiceServiceReady
+                      ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-md hover:shadow-lg'
+                      : 'bg-gray-500 text-gray-300 cursor-not-allowed'
                 }`}
               >
                 <Settings className="w-5 h-5" />
@@ -296,8 +292,12 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               {/* Reading Controls */}
               <button
                 onClick={handleReadAloud}
-                disabled={isReading && voiceService.isSpeaking() && !voiceService.isPaused()}
-                className="flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 bg-teal text-white hover:bg-teal/80 shadow-md hover:shadow-lg disabled:opacity-50"
+                disabled={!isVoiceServiceReady || (isReading && voiceService.isSpeaking() && !voiceService.isPaused())}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg ${
+                  isVoiceServiceReady
+                    ? 'bg-teal text-white hover:bg-teal/80'
+                    : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                } disabled:opacity-50 disabled:transform-none`}
               >
                 {isReading && !voiceService.isPaused() ? (
                   <Pause className="w-5 h-5" />
@@ -312,7 +312,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               {isReading && (
                 <button
                   onClick={handleStop}
-                  className="p-2 rounded-full transition-all duration-200 bg-gray-600 text-white hover:bg-gray-500"
+                  className="p-2 rounded-full transition-all duration-200 transform hover:scale-105 bg-gray-600 text-white hover:bg-gray-500"
                 >
                   <RotateCcw className="w-5 h-5" />
                 </button>
@@ -322,10 +322,10 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
           <button
             onClick={handleSave}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg ${
               isSaved
                 ? 'bg-green-500 text-white'
-                : 'bg-coral text-white hover:bg-coral/80 shadow-md hover:shadow-lg'
+                : 'bg-coral text-white hover:bg-coral/80'
             }`}
           >
             {isSaved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
@@ -334,8 +334,21 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         </div>
       </div>
 
+      {/* Audio Error Display */}
+      {audioError && (
+        <div className="mb-6 p-4 rounded-xl bg-red-900 border border-red-500">
+          <div className="flex items-center space-x-3">
+            <VolumeX className="w-5 h-5 text-red-400" />
+            <div>
+              <p className="font-medium text-red-400">Audio Service Error</p>
+              <p className="text-sm text-red-300">{audioError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Voice Selector Modal */}
-      {showVoiceSelector && audioEnabled && (
+      {showVoiceSelector && audioEnabled && isVoiceServiceReady && (
         <div className="mb-8">
           <VoiceSelector
             selectedVoice={selectedVoice}
@@ -357,7 +370,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               <span className="text-sm text-blue-400">
                 {Math.round(readingProgress)}%
               </span>
-              {voiceService.isElevenLabsEnabled() && audioDuration > 0 && (
+              {audioDuration > 0 && (
                 <span className="text-xs text-gray-400">
                   {Math.floor(currentAudioTime)}s / {Math.floor(audioDuration)}s
                 </span>
@@ -370,12 +383,10 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               style={{ width: `${readingProgress}%` }}
             />
           </div>
-          {voiceService.isElevenLabsEnabled() && (
-            <div className="mt-2 text-xs text-gray-400 flex items-center space-x-2">
-              <span>🎤 ElevenLabs Enhanced Audio</span>
-              {soundEffectsEnabled && <span>🔊 Sound Effects Active</span>}
-            </div>
-          )}
+          <div className="mt-2 text-xs text-gray-400 flex items-center space-x-2">
+            <span>🎤 ElevenLabs Enhanced Audio</span>
+            {soundEffectsEnabled && <span>🔊 Sound Effects Active</span>}
+          </div>
         </div>
       )}
 
@@ -448,15 +459,15 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             <div className="flex items-center space-x-2 text-sm">
               <Volume2 className="w-4 h-4 text-blue-400" />
               <span className="text-blue-200">
-                {voiceService.isElevenLabsEnabled() ? (
+                {isVoiceServiceReady ? (
                   <>
                     <strong>ElevenLabs Enhanced Audio:</strong> Professional voice synthesis with dynamic sound effects! 
                     Choose from 10 unique character voices with crystal-clear pronunciation and immersive ambient sounds.
                   </>
                 ) : (
                   <>
-                    <strong>Voice Narration:</strong> Choose from 10 unique character voices! 
-                    Each voice uses clear, standard English pronunciation with its own personality and speaking style.
+                    <strong>Audio Service:</strong> ElevenLabs API key required for premium voice features. 
+                    Please configure your API key to enable high-quality voice synthesis.
                   </>
                 )}
               </span>
@@ -473,7 +484,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               <div>Word Count: {words.length}</div>
               <div>Character Count: {story.content.length}</div>
               <div>Selected Voice: {selectedVoice}</div>
-              <div>ElevenLabs Enabled: {voiceService.isElevenLabsEnabled() ? 'Yes' : 'No'}</div>
+              <div>ElevenLabs Ready: {isVoiceServiceReady ? 'Yes' : 'No'}</div>
               <div>Sound Effects: {soundEffectsEnabled ? 'Enabled' : 'Disabled'}</div>
               <div>Created: {story.createdAt}</div>
             </div>
