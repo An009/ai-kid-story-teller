@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle, Settings } from 'lucide-react';
+import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle, Settings, VolumeX } from 'lucide-react';
 import { Story } from '../types/Story';
 import { voiceService } from '../services/voiceService';
+import { soundService } from '../services/soundService';
 import VoiceSelector from './VoiceSelector';
 
 interface StoryDisplayProps {
@@ -25,6 +26,9 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   const [selectedVoice, setSelectedVoice] = useState('wiseStoryteller');
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
+  const [currentAudioTime, setCurrentAudioTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   const words = story.content.split(' ');
 
@@ -32,7 +36,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     id: story.id,
     title: story.title,
     contentLength: story.content.length,
-    wordsCount: words.length
+    wordsCount: words.length,
+    elevenLabsEnabled: voiceService.isElevenLabsEnabled()
   });
 
   useEffect(() => {
@@ -40,16 +45,46 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     const recommendedVoice = voiceService.getRecommendedVoice(story.content, story.character);
     setSelectedVoice(recommendedVoice);
     console.log('🎤 Recommended voice for story:', recommendedVoice);
-  }, [story]);
 
-  useEffect(() => {
+    // Play ambient sound for the story setting
+    if (audioEnabled && soundEffectsEnabled) {
+      soundService.playThematicSound(story.theme, story.setting, 'ambient');
+    }
+
     return () => {
+      // Cleanup audio when component unmounts
       voiceService.stop();
+      soundService.stopAll();
     };
-  }, []);
+  }, [story, audioEnabled, soundEffectsEnabled]);
+
+  // Update audio progress for ElevenLabs
+  useEffect(() => {
+    if (!voiceService.isElevenLabsEnabled() || !isReading) return;
+
+    const updateProgress = () => {
+      const currentTime = voiceService.getCurrentTime();
+      const duration = voiceService.getDuration();
+      
+      setCurrentAudioTime(currentTime);
+      setAudioDuration(duration);
+      
+      if (duration > 0) {
+        const progress = (currentTime / duration) * 100;
+        setReadingProgress(progress);
+        
+        // Estimate word progress based on audio progress
+        const estimatedWordIndex = Math.floor((progress / 100) * words.length);
+        setCurrentWordIndex(estimatedWordIndex);
+      }
+    };
+
+    const interval = setInterval(updateProgress, 100);
+    return () => clearInterval(interval);
+  }, [isReading, words.length]);
 
   const handleReadAloud = async () => {
-    if (!audioEnabled || !('speechSynthesis' in window)) {
+    if (!audioEnabled || !('speechSynthesis' in window && voiceService.isElevenLabsEnabled())) {
       console.log('🔇 Audio disabled or speech synthesis not available');
       return;
     }
@@ -73,32 +108,47 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         
         console.log('🎤 Starting speech with voice:', selectedVoice);
         
-        // Create a version of the story with word tracking
-        const sentences = story.content.split(/[.!?]+/).filter(s => s.trim());
-        let totalWordsRead = 0;
-        
-        for (let i = 0; i < sentences.length; i++) {
-          const sentence = sentences[i].trim();
-          if (!sentence) continue;
+        // Play story transition sound effect
+        if (soundEffectsEnabled) {
+          await soundService.playEmotionalCue('anticipation', 'low');
+        }
+
+        // For ElevenLabs, speak the entire story at once
+        if (voiceService.isElevenLabsEnabled()) {
+          await voiceService.speak(story.content, selectedVoice);
+        } else {
+          // For Web Speech API, break into sentences for better control
+          const sentences = story.content.split(/[.!?]+/).filter(s => s.trim());
+          let totalWordsRead = 0;
           
-          const sentenceWords = sentence.split(' ');
-          
-          // Speak each sentence
-          await voiceService.speak(sentence, selectedVoice);
-          
-          // Update progress
-          totalWordsRead += sentenceWords.length;
-          setCurrentWordIndex(totalWordsRead);
-          setReadingProgress((totalWordsRead / words.length) * 100);
-          
-          // Small pause between sentences
-          await new Promise(resolve => setTimeout(resolve, 300));
+          for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i].trim();
+            if (!sentence) continue;
+            
+            const sentenceWords = sentence.split(' ');
+            
+            // Speak each sentence
+            await voiceService.speak(sentence, selectedVoice);
+            
+            // Update progress
+            totalWordsRead += sentenceWords.length;
+            setCurrentWordIndex(totalWordsRead);
+            setReadingProgress((totalWordsRead / words.length) * 100);
+            
+            // Small pause between sentences
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
         }
         
         console.log('🎤 Speech completed');
         setIsReading(false);
         setCurrentWordIndex(0);
         setReadingProgress(0);
+        
+        // Play completion sound effect
+        if (soundEffectsEnabled) {
+          await soundService.playEmotionalCue('joy', 'medium');
+        }
         
       } catch (error) {
         console.error('🎤 Speech error:', error);
@@ -115,6 +165,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     setIsReading(false);
     setCurrentWordIndex(0);
     setReadingProgress(0);
+    setCurrentAudioTime(0);
+    setAudioDuration(0);
   };
 
   const handleSave = () => {
@@ -123,6 +175,12 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       onSave(story);
       setIsSaved(true);
       console.log('✅ Story saved successfully');
+      
+      // Play save confirmation sound
+      if (audioEnabled && soundEffectsEnabled) {
+        soundService.playEmotionalCue('success', 'low');
+      }
+      
       setTimeout(() => setIsSaved(false), 3000);
     } catch (error) {
       console.error('❌ Error saving story:', error);
@@ -140,6 +198,19 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       setTimeout(() => {
         handleReadAloud();
       }, 500);
+    }
+  };
+
+  const toggleSoundEffects = () => {
+    setSoundEffectsEnabled(!soundEffectsEnabled);
+    soundService.setEnabled(!soundEffectsEnabled);
+    
+    if (!soundEffectsEnabled) {
+      // Re-enable and play ambient sound
+      soundService.playThematicSound(story.theme, story.setting, 'ambient');
+    } else {
+      // Disable and stop all sounds
+      soundService.stopAll();
     }
   };
 
@@ -195,6 +266,20 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         <div className="flex items-center space-x-3">
           {audioEnabled && (
             <>
+              {/* Sound Effects Toggle */}
+              <button
+                onClick={toggleSoundEffects}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                  soundEffectsEnabled
+                    ? 'bg-green-600 text-white hover:bg-green-500'
+                    : 'bg-gray-600 text-white hover:bg-gray-500'
+                }`}
+                title={soundEffectsEnabled ? 'Disable sound effects' : 'Enable sound effects'}
+              >
+                {soundEffectsEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                <span className="hidden sm:inline">Effects</span>
+              </button>
+
               {/* Voice Settings Button */}
               <button
                 onClick={() => setShowVoiceSelector(!showVoiceSelector)}
@@ -268,9 +353,16 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             <span className="text-sm font-medium text-blue-300">
               Reading Progress
             </span>
-            <span className="text-sm text-blue-400">
-              {Math.round(readingProgress)}%
-            </span>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-blue-400">
+                {Math.round(readingProgress)}%
+              </span>
+              {voiceService.isElevenLabsEnabled() && audioDuration > 0 && (
+                <span className="text-xs text-gray-400">
+                  {Math.floor(currentAudioTime)}s / {Math.floor(audioDuration)}s
+                </span>
+              )}
+            </div>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2">
             <div 
@@ -278,6 +370,12 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               style={{ width: `${readingProgress}%` }}
             />
           </div>
+          {voiceService.isElevenLabsEnabled() && (
+            <div className="mt-2 text-xs text-gray-400 flex items-center space-x-2">
+              <span>🎤 ElevenLabs Enhanced Audio</span>
+              {soundEffectsEnabled && <span>🔊 Sound Effects Active</span>}
+            </div>
+          )}
         </div>
       )}
 
@@ -344,13 +442,23 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
           </div>
         )}
 
-        {/* Audio Controls Info */}
+        {/* Audio Features Info */}
         {audioEnabled && (
           <div className="mt-8 p-4 rounded-xl bg-gray-700 border border-gray-600">
             <div className="flex items-center space-x-2 text-sm">
               <Volume2 className="w-4 h-4 text-blue-400" />
               <span className="text-blue-200">
-                Choose from 10 unique character voices! Each voice uses clear, standard English pronunciation with its own personality and speaking style perfect for different story types.
+                {voiceService.isElevenLabsEnabled() ? (
+                  <>
+                    <strong>ElevenLabs Enhanced Audio:</strong> Professional voice synthesis with dynamic sound effects! 
+                    Choose from 10 unique character voices with crystal-clear pronunciation and immersive ambient sounds.
+                  </>
+                ) : (
+                  <>
+                    <strong>Voice Narration:</strong> Choose from 10 unique character voices! 
+                    Each voice uses clear, standard English pronunciation with its own personality and speaking style.
+                  </>
+                )}
               </span>
             </div>
           </div>
@@ -365,6 +473,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               <div>Word Count: {words.length}</div>
               <div>Character Count: {story.content.length}</div>
               <div>Selected Voice: {selectedVoice}</div>
+              <div>ElevenLabs Enabled: {voiceService.isElevenLabsEnabled() ? 'Yes' : 'No'}</div>
+              <div>Sound Effects: {soundEffectsEnabled ? 'Enabled' : 'Disabled'}</div>
               <div>Created: {story.createdAt}</div>
             </div>
           </details>

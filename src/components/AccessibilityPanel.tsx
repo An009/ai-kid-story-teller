@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { X, Eye, Type, Volume2 } from 'lucide-react';
+import { X, Eye, Type, Volume2, VolumeX, Headphones } from 'lucide-react';
+import { soundService } from '../services/soundService';
 
 interface AccessibilityPanelProps {
   highContrast: boolean;
@@ -23,6 +24,8 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
+  const [masterVolume, setMasterVolume] = useState(0.7);
 
   // Handle modal open animations and body scroll
   useEffect(() => {
@@ -64,6 +67,18 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
     if (e.target === e.currentTarget) {
       handleClose();
     }
+  };
+
+  const handleSoundEffectsToggle = (enabled: boolean) => {
+    setSoundEffectsEnabled(enabled);
+    soundService.setEnabled(enabled);
+    console.log('🔊 Sound effects', enabled ? 'enabled' : 'disabled');
+  };
+
+  const handleVolumeChange = (volume: number) => {
+    setMasterVolume(volume);
+    soundService.setMasterVolume(volume);
+    console.log('🔊 Master volume set to:', volume);
   };
 
   return (
@@ -159,7 +174,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
               </div>
             </div>
 
-            {/* Audio */}
+            {/* Audio Feedback */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Volume2 className="w-6 h-6 text-white" />
@@ -168,7 +183,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                     Audio Feedback
                   </h4>
                   <p className="text-sm text-gray-400">
-                    Sound effects and narration with clear English pronunciation
+                    Voice narration with clear English pronunciation
                   </p>
                 </div>
               </div>
@@ -184,6 +199,82 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                 }`} />
               </button>
             </div>
+
+            {/* Sound Effects */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Headphones className="w-6 h-6 text-white" />
+                <div>
+                  <h4 className="font-medium text-white">
+                    Sound Effects
+                  </h4>
+                  <p className="text-sm text-gray-400">
+                    Immersive ambient sounds and story effects
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleSoundEffectsToggle(!soundEffectsEnabled)}
+                className={`relative w-12 h-6 rounded-full transition-all duration-200 hover:scale-105 ${
+                  soundEffectsEnabled ? 'bg-teal' : 'bg-gray-600'
+                }`}
+                aria-label={`${soundEffectsEnabled ? 'Disable' : 'Enable'} sound effects`}
+              >
+                <div className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform duration-200 ${
+                  soundEffectsEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </button>
+            </div>
+
+            {/* Master Volume */}
+            {(audioEnabled || soundEffectsEnabled) && (
+              <div>
+                <div className="flex items-center space-x-3 mb-3">
+                  {masterVolume > 0 ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-white" />}
+                  <div>
+                    <h4 className="font-medium text-white">
+                      Master Volume
+                    </h4>
+                    <p className="text-sm text-gray-400">
+                      Control overall audio volume level
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <VolumeX className="w-4 h-4 text-gray-400" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={masterVolume}
+                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                    className="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+                    aria-label="Master volume control"
+                  />
+                  <Volume2 className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-white min-w-[3rem] text-right">
+                    {Math.round(masterVolume * 100)}%
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Audio Technology Info */}
+            {audioEnabled && (
+              <div className="p-4 rounded-lg bg-gray-700 border border-gray-600">
+                <div className="flex items-start space-x-3">
+                  <Headphones className="w-5 h-5 text-blue-400 mt-0.5" />
+                  <div>
+                    <h5 className="font-medium text-white mb-1">Enhanced Audio Experience</h5>
+                    <p className="text-sm text-gray-300">
+                      This app features ElevenLabs AI-powered voice synthesis for crystal-clear narration 
+                      and dynamic sound effects that adapt to your story's theme and setting.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-600">
@@ -196,6 +287,42 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Custom slider styles */}
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #4ECDC4;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #4ECDC4;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-webkit-slider-track {
+          height: 8px;
+          border-radius: 4px;
+          background: #374151;
+        }
+
+        .slider::-moz-range-track {
+          height: 8px;
+          border-radius: 4px;
+          background: #374151;
+        }
+      `}</style>
     </>
   );
 };

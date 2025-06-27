@@ -80,9 +80,16 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
     <div className="bg-gray-800 border border-gray-700 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
       <div className="flex items-center space-x-3 mb-6">
         <Volume2 className="w-6 h-6 text-coral" />
-        <h3 className="text-2xl font-bold text-white">
-          Choose Reading Voice
-        </h3>
+        <div>
+          <h3 className="text-2xl font-bold text-white">
+            Choose Reading Voice
+          </h3>
+          {voiceService.isElevenLabsEnabled() && (
+            <p className="text-sm text-blue-400 mt-1">
+              🎤 Enhanced with ElevenLabs AI for crystal-clear narration
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -91,6 +98,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
           const isSelected = selectedVoice === personality.id;
           const isTesting = isTestingVoice === personality.id;
           const isExpanded = expandedVoice === personality.id;
+          const hasElevenLabsVoice = !!personality.characteristics.elevenLabsVoiceId;
 
           return (
             <div
@@ -114,7 +122,14 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                       <IconComponent className="w-6 h-6" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm">{personality.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-bold text-sm">{personality.name}</h4>
+                        {hasElevenLabsVoice && voiceService.isElevenLabsEnabled() && (
+                          <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                            AI
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs opacity-80">
                         {personality.description.substring(0, 40)}...
                       </p>
@@ -146,17 +161,34 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                 </div>
 
                 {/* Voice Characteristics Preview */}
-                <div className="flex items-center space-x-2 text-xs">
-                  <span className={`px-2 py-1 rounded-full ${
-                    isSelected ? 'bg-white/20' : 'bg-gray-600'
-                  }`}>
-                    Speed: {personality.characteristics.rate}x
-                  </span>
-                  <span className={`px-2 py-1 rounded-full ${
-                    isSelected ? 'bg-white/20' : 'bg-gray-600'
-                  }`}>
-                    Pitch: {personality.characteristics.pitch}x
-                  </span>
+                <div className="flex items-center space-x-2 text-xs mb-3">
+                  {voiceService.isElevenLabsEnabled() && hasElevenLabsVoice ? (
+                    <>
+                      <span className={`px-2 py-1 rounded-full ${
+                        isSelected ? 'bg-white/20' : 'bg-gray-600'
+                      }`}>
+                        Stability: {Math.round((personality.characteristics.stability || 0.75) * 100)}%
+                      </span>
+                      <span className={`px-2 py-1 rounded-full ${
+                        isSelected ? 'bg-white/20' : 'bg-gray-600'
+                      }`}>
+                        Quality: High
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`px-2 py-1 rounded-full ${
+                        isSelected ? 'bg-white/20' : 'bg-gray-600'
+                      }`}>
+                        Speed: {personality.characteristics.rate}x
+                      </span>
+                      <span className={`px-2 py-1 rounded-full ${
+                        isSelected ? 'bg-white/20' : 'bg-gray-600'
+                      }`}>
+                        Pitch: {personality.characteristics.pitch}x
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 {/* Expand/Collapse Button */}
@@ -165,7 +197,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                     e.stopPropagation();
                     setExpandedVoice(isExpanded ? null : personality.id);
                   }}
-                  className={`mt-3 w-full text-xs py-1 rounded transition-all duration-200 ${
+                  className={`w-full text-xs py-1 rounded transition-all duration-200 ${
                     isSelected ? 'bg-white/20 hover:bg-white/30' : 'bg-gray-600 hover:bg-gray-500'
                   }`}
                 >
@@ -179,6 +211,25 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                   isSelected ? 'border-white/20' : 'border-gray-600'
                 }`}>
                   <div className="space-y-3">
+                    {/* Technology Info */}
+                    {voiceService.isElevenLabsEnabled() && hasElevenLabsVoice && (
+                      <div>
+                        <h5 className="font-semibold text-sm mb-2">Technology:</h5>
+                        <div className="flex items-center space-x-2 text-xs">
+                          <span className={`px-2 py-1 rounded-full ${
+                            isSelected ? 'bg-white/20' : 'bg-blue-600'
+                          }`}>
+                            ElevenLabs AI
+                          </span>
+                          <span className={`px-2 py-1 rounded-full ${
+                            isSelected ? 'bg-white/20' : 'bg-green-600'
+                          }`}>
+                            Neural Voice
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Sample Phrases */}
                     <div>
                       <h5 className="font-semibold text-sm mb-2">Sample Phrases:</h5>
@@ -230,6 +281,11 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
             <span className="text-sm text-white">
               Testing {voicePersonalities[isTestingVoice]?.name} voice...
             </span>
+            {voiceService.isElevenLabsEnabled() && voicePersonalities[isTestingVoice]?.characteristics.elevenLabsVoiceId && (
+              <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                ElevenLabs
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -237,9 +293,11 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
       {/* Usage Tip */}
       <div className="mt-4 p-3 rounded-lg text-xs bg-gray-700 text-gray-300">
         <p>
-          💡 <strong>Tip:</strong> All voices use clear, standard English pronunciation. 
-          Each voice has unique characteristics perfect for different story types. 
-          Try the test button to hear how each voice sounds before selecting!
+          💡 <strong>Tip:</strong> {voiceService.isElevenLabsEnabled() ? (
+            'Experience premium AI-powered voices with ElevenLabs technology for crystal-clear narration and natural speech patterns.'
+          ) : (
+            'All voices use clear, standard English pronunciation. Each voice has unique characteristics perfect for different story types.'
+          )} Try the test button to hear how each voice sounds before selecting!
         </p>
       </div>
     </div>
