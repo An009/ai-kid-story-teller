@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, Play, Pause, RotateCcw, Mic, User, Crown, Zap, Sparkles, Anchor, Bot, BookOpen, Smile, Leaf } from 'lucide-react';
+import { Volume2, Play, Pause, RotateCcw, Mic, User, Crown, Zap, Sparkles, Anchor, Bot, BookOpen, Smile, Leaf, AlertCircle } from 'lucide-react';
 import { voiceService, voicePersonalities, VoicePersonality } from '../services/voiceService';
 
 interface VoiceSelectorProps {
@@ -31,12 +31,19 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
   const [isTestingVoice, setIsTestingVoice] = useState<string | null>(null);
   const [expandedVoice, setExpandedVoice] = useState<string | null>(null);
   const [availablePersonalities, setAvailablePersonalities] = useState<VoicePersonality[]>([]);
+  const [isServiceReady, setIsServiceReady] = useState(false);
 
   useEffect(() => {
     setAvailablePersonalities(voiceService.getAvailablePersonalities());
+    setIsServiceReady(voiceService.isReady());
   }, []);
 
   const handleVoiceTest = async (voiceId: string) => {
+    if (!isServiceReady) {
+      console.warn('ElevenLabs service not available');
+      return;
+    }
+
     if (isTestingVoice) {
       voiceService.stop();
       setIsTestingVoice(null);
@@ -54,7 +61,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
   };
 
   const handleVoiceSelect = (voiceId: string) => {
-    if (!disabled) {
+    if (!disabled && isServiceReady) {
       onVoiceChange(voiceId);
       setExpandedVoice(null);
     }
@@ -76,13 +83,49 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
     return colors[voiceId] || 'from-gray-500 to-gray-600';
   };
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'child': return '👶';
+      case 'adult': return '👤';
+      case 'character': return '🎭';
+      case 'narrator': return '📖';
+      default: return '🎤';
+    }
+  };
+
+  if (!isServiceReady) {
+    return (
+      <div className="bg-gray-800 border border-gray-700 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
+        <div className="flex items-center space-x-3 mb-4">
+          <AlertCircle className="w-6 h-6 text-red-400" />
+          <h3 className="text-2xl font-bold text-white">
+            ElevenLabs Not Available
+          </h3>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-gray-300 mb-4">
+            ElevenLabs API key is required for premium voice features.
+          </p>
+          <p className="text-sm text-gray-400">
+            Please add your ElevenLabs API key to the environment configuration to enable high-quality voice synthesis.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-800 border border-gray-700 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
       <div className="flex items-center space-x-3 mb-6">
         <Volume2 className="w-6 h-6 text-coral" />
-        <h3 className="text-2xl font-bold text-white">
-          Choose Reading Voice
-        </h3>
+        <div>
+          <h3 className="text-2xl font-bold text-white">
+            ElevenLabs Voice Selection
+          </h3>
+          <p className="text-sm text-blue-400 mt-1">
+            🎤 Premium AI voices with crystal-clear narration
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -95,7 +138,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
           return (
             <div
               key={personality.id}
-              className={`relative rounded-xl transition-all duration-300 ${
+              className={`relative rounded-xl transition-all duration-300 transform hover:scale-105 ${
                 isSelected
                   ? `bg-gradient-to-br ${getVoiceColor(personality.id)} text-white shadow-lg scale-105`
                   : 'bg-gray-700 text-white hover:bg-gray-600'
@@ -114,7 +157,15 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                       <IconComponent className="w-6 h-6" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm">{personality.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-bold text-sm">{personality.name}</h4>
+                        <span className="text-xs">
+                          {getCategoryIcon(personality.category)}
+                        </span>
+                        <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                          AI
+                        </span>
+                      </div>
                       <p className="text-xs opacity-80">
                         {personality.description.substring(0, 40)}...
                       </p>
@@ -128,9 +179,9 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                       if (!disabled) handleVoiceTest(personality.id);
                     }}
                     disabled={disabled}
-                    className={`p-2 rounded-full transition-all duration-200 ${
+                    className={`p-2 rounded-full transition-all duration-200 transform hover:scale-110 ${
                       isTesting
-                        ? 'bg-red-500 text-white'
+                        ? 'bg-red-500 text-white animate-pulse'
                         : isSelected
                           ? 'bg-white/20 hover:bg-white/30'
                           : 'bg-gray-600 hover:bg-gray-500 text-white'
@@ -138,7 +189,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                     aria-label={isTesting ? 'Stop voice test' : 'Test voice'}
                   >
                     {isTesting ? (
-                      <RotateCcw className="w-4 h-4" />
+                      <RotateCcw className="w-4 h-4 animate-spin" />
                     ) : (
                       <Play className="w-4 h-4" />
                     )}
@@ -146,16 +197,16 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                 </div>
 
                 {/* Voice Characteristics Preview */}
-                <div className="flex items-center space-x-2 text-xs">
+                <div className="flex items-center space-x-2 text-xs mb-3">
                   <span className={`px-2 py-1 rounded-full ${
                     isSelected ? 'bg-white/20' : 'bg-gray-600'
                   }`}>
-                    Speed: {personality.characteristics.rate}x
+                    Stability: {Math.round((personality.characteristics.stability) * 100)}%
                   </span>
                   <span className={`px-2 py-1 rounded-full ${
                     isSelected ? 'bg-white/20' : 'bg-gray-600'
                   }`}>
-                    Pitch: {personality.characteristics.pitch}x
+                    Model: Turbo v2.5
                   </span>
                 </div>
 
@@ -165,7 +216,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                     e.stopPropagation();
                     setExpandedVoice(isExpanded ? null : personality.id);
                   }}
-                  className={`mt-3 w-full text-xs py-1 rounded transition-all duration-200 ${
+                  className={`w-full text-xs py-1 rounded transition-all duration-200 ${
                     isSelected ? 'bg-white/20 hover:bg-white/30' : 'bg-gray-600 hover:bg-gray-500'
                   }`}
                 >
@@ -179,6 +230,28 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                   isSelected ? 'border-white/20' : 'border-gray-600'
                 }`}>
                   <div className="space-y-3">
+                    {/* Technology Info */}
+                    <div>
+                      <h5 className="font-semibold text-sm mb-2">Technology:</h5>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <span className={`px-2 py-1 rounded-full ${
+                          isSelected ? 'bg-white/20' : 'bg-blue-600'
+                        }`}>
+                          ElevenLabs AI
+                        </span>
+                        <span className={`px-2 py-1 rounded-full ${
+                          isSelected ? 'bg-white/20' : 'bg-green-600'
+                        }`}>
+                          Neural Voice
+                        </span>
+                        <span className={`px-2 py-1 rounded-full ${
+                          isSelected ? 'bg-white/20' : 'bg-purple-600'
+                        }`}>
+                          {personality.gender}
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Sample Phrases */}
                     <div>
                       <h5 className="font-semibold text-sm mb-2">Sample Phrases:</h5>
@@ -213,7 +286,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
 
               {/* Selection Indicator */}
               {isSelected && (
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow rounded-full flex items-center justify-center">
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow rounded-full flex items-center justify-center animate-pulse">
                   <span className="text-xs">✨</span>
                 </div>
               )}
@@ -224,22 +297,25 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
 
       {/* Voice Testing Status */}
       {isTestingVoice && (
-        <div className="mt-4 p-3 rounded-lg bg-gray-700">
+        <div className="mt-4 p-3 rounded-lg bg-gray-700 border border-blue-500">
           <div className="flex items-center space-x-2">
             <Volume2 className="w-4 h-4 animate-pulse text-blue-400" />
             <span className="text-sm text-white">
               Testing {voicePersonalities[isTestingVoice]?.name} voice...
+            </span>
+            <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full animate-pulse">
+              ElevenLabs
             </span>
           </div>
         </div>
       )}
 
       {/* Usage Tip */}
-      <div className="mt-4 p-3 rounded-lg text-xs bg-gray-700 text-gray-300">
+      <div className="mt-4 p-3 rounded-lg text-xs bg-gray-700 text-gray-300 border border-gray-600">
         <p>
-          💡 <strong>Tip:</strong> All voices use clear, standard English pronunciation. 
-          Each voice has unique characteristics perfect for different story types. 
-          Try the test button to hear how each voice sounds before selecting!
+          💡 <strong>Premium Experience:</strong> All voices use ElevenLabs' latest Turbo v2.5 model for 
+          ultra-fast, crystal-clear speech synthesis with natural intonation and emotion. 
+          Click the test button to preview each voice before selecting!
         </p>
       </div>
     </div>

@@ -1,13 +1,14 @@
+import { audioService } from './audioService';
+
 export interface VoiceCharacteristics {
-  rate: number;           // Speaking speed (0.1 to 10)
-  pitch: number;          // Voice pitch (0 to 2)
-  volume: number;         // Volume level (0 to 1)
-  voiceURI?: string;      // Preferred voice URI
-  voiceGender?: 'male' | 'female' | 'neutral';
-  voiceAge?: 'child' | 'young' | 'adult' | 'elderly';
-  accent?: string;        // Accent or dialect
-  pauseDuration?: number; // Extra pause between sentences (ms)
-  emphasis?: {            // Words to emphasize
+  elevenLabsVoiceId: string;
+  elevenLabsModelId: string;
+  stability: number;
+  similarityBoost: number;
+  style?: number;
+  useSpeakerBoost?: boolean;
+  volume: number;
+  emphasis?: {
     words: string[];
     pitchMultiplier: number;
     rateMultiplier: number;
@@ -21,6 +22,8 @@ export interface VoicePersonality {
   characteristics: VoiceCharacteristics;
   samplePhrases: string[];
   mannerisms: string[];
+  category: 'child' | 'adult' | 'character' | 'narrator';
+  gender: 'male' | 'female' | 'neutral';
 }
 
 export const voicePersonalities: Record<string, VoicePersonality> = {
@@ -28,13 +31,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'cheerfulChild',
     name: 'Cheerful Child',
     description: 'A bright, enthusiastic young voice with boundless energy',
+    category: 'child',
+    gender: 'neutral',
     characteristics: {
-      rate: 1.2,
-      pitch: 1.4,
+      elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam - clear, youthful
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.8,
+      similarityBoost: 0.8,
+      style: 0.2,
+      useSpeakerBoost: true,
       volume: 0.9,
-      voiceGender: 'neutral',
-      voiceAge: 'child',
-      pauseDuration: 300,
       emphasis: {
         words: ['wow', 'amazing', 'cool', 'awesome', 'wonderful', 'exciting'],
         pitchMultiplier: 1.6,
@@ -58,13 +64,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'regalPrincess',
     name: 'Regal Princess',
     description: 'An elegant, refined voice with perfect pronunciation and grace',
+    category: 'character',
+    gender: 'female',
     characteristics: {
-      rate: 0.8,
-      pitch: 1.2,
+      elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella - elegant, refined
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.9,
+      similarityBoost: 0.7,
+      style: 0.1,
+      useSpeakerBoost: true,
       volume: 0.8,
-      voiceGender: 'female',
-      voiceAge: 'young',
-      pauseDuration: 500,
       emphasis: {
         words: ['royal', 'magnificent', 'elegant', 'gracious', 'noble', 'beautiful'],
         pitchMultiplier: 1.1,
@@ -88,13 +97,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'elderlyWise',
     name: 'Elderly Storyteller',
     description: 'A wise, gentle voice with years of experience and warmth',
+    category: 'narrator',
+    gender: 'neutral',
     characteristics: {
-      rate: 0.7,
-      pitch: 0.9,
+      elevenLabsVoiceId: 'ErXwobaYiN019PkySvjV', // Antoni - warm, mature
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.9,
+      similarityBoost: 0.6,
+      style: 0.0,
+      useSpeakerBoost: true,
       volume: 0.7,
-      voiceGender: 'neutral',
-      voiceAge: 'elderly',
-      pauseDuration: 800,
       emphasis: {
         words: ['remember', 'wisdom', 'long ago', 'experience', 'learned', 'important'],
         pitchMultiplier: 0.9,
@@ -118,13 +130,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'boomingWizard',
     name: 'Booming Wizard',
     description: 'A powerful voice with deep, resonant tones and magical authority',
+    category: 'character',
+    gender: 'male',
     characteristics: {
-      rate: 0.9,
-      pitch: 0.6,
+      elevenLabsVoiceId: 'VR6AewLTigWG4xSOukaG', // Arnold - deep, authoritative
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.8,
+      similarityBoost: 0.8,
+      style: 0.3,
+      useSpeakerBoost: true,
       volume: 1.0,
-      voiceGender: 'male',
-      voiceAge: 'adult',
-      pauseDuration: 600,
       emphasis: {
         words: ['magic', 'spell', 'enchantment', 'power', 'ancient', 'mystical', 'behold'],
         pitchMultiplier: 0.5,
@@ -148,13 +163,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'squeakyFairy',
     name: 'Excited Fairy',
     description: 'A tiny, high-pitched voice with infectious enthusiasm',
+    category: 'character',
+    gender: 'female',
     characteristics: {
-      rate: 1.4,
-      pitch: 1.8,
+      elevenLabsVoiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy - light, playful
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.7,
+      similarityBoost: 0.9,
+      style: 0.4,
+      useSpeakerBoost: true,
       volume: 0.8,
-      voiceGender: 'female',
-      voiceAge: 'child',
-      pauseDuration: 200,
       emphasis: {
         words: ['sparkle', 'glitter', 'magic', 'tiny', 'flutter', 'shimmer', 'wonderful'],
         pitchMultiplier: 1.9,
@@ -178,13 +196,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'adventurousCaptain',
     name: 'Adventurous Captain',
     description: 'A confident sea captain with clear, commanding voice',
+    category: 'character',
+    gender: 'male',
     characteristics: {
-      rate: 1.0,
-      pitch: 0.8,
+      elevenLabsVoiceId: 'yoZ06aMxZJJ28mfd3POQ', // Sam - confident, clear
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.8,
+      similarityBoost: 0.7,
+      style: 0.2,
+      useSpeakerBoost: true,
       volume: 0.9,
-      voiceGender: 'male',
-      voiceAge: 'adult',
-      pauseDuration: 400,
       emphasis: {
         words: ['adventure', 'treasure', 'ship', 'sea', 'journey', 'brave', 'courage'],
         pitchMultiplier: 0.7,
@@ -208,13 +229,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'friendlyRobot',
     name: 'Friendly Robot',
     description: 'A helpful AI companion with precise pronunciation and warmth',
+    category: 'character',
+    gender: 'neutral',
     characteristics: {
-      rate: 1.0,
-      pitch: 1.1,
+      elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam - clear, neutral
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.9,
+      similarityBoost: 0.6,
+      style: 0.0,
+      useSpeakerBoost: true,
       volume: 0.8,
-      voiceGender: 'neutral',
-      voiceAge: 'adult',
-      pauseDuration: 300,
       emphasis: {
         words: ['compute', 'analyze', 'process', 'data', 'system', 'function', 'helpful'],
         pitchMultiplier: 1.0,
@@ -238,13 +262,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'wiseStoryteller',
     name: 'Wise Storyteller',
     description: 'A masterful narrator with perfect pacing and dramatic flair',
+    category: 'narrator',
+    gender: 'neutral',
     characteristics: {
-      rate: 0.9,
-      pitch: 1.0,
+      elevenLabsVoiceId: 'TxGEqnHWrfWFTfGW9XjX', // Josh - warm, narrative
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.8,
+      similarityBoost: 0.7,
+      style: 0.1,
+      useSpeakerBoost: true,
       volume: 0.8,
-      voiceGender: 'neutral',
-      voiceAge: 'adult',
-      pauseDuration: 600,
       emphasis: {
         words: ['once upon a time', 'long ago', 'legend', 'tale', 'story', 'moral', 'remember'],
         pitchMultiplier: 1.1,
@@ -268,13 +295,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'playfulFriend',
     name: 'Playful Friend',
     description: 'A fun, energetic voice perfect for silly stories and games',
+    category: 'child',
+    gender: 'neutral',
     characteristics: {
-      rate: 1.1,
-      pitch: 1.2,
+      elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam - versatile, friendly
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.7,
+      similarityBoost: 0.8,
+      style: 0.3,
+      useSpeakerBoost: true,
       volume: 0.9,
-      voiceGender: 'neutral',
-      voiceAge: 'young',
-      pauseDuration: 350,
       emphasis: {
         words: ['fun', 'silly', 'funny', 'laugh', 'play', 'game', 'giggle'],
         pitchMultiplier: 1.3,
@@ -298,13 +328,16 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
     id: 'calmNatureGuide',
     name: 'Calm Nature Guide',
     description: 'A peaceful, soothing voice like a gentle breeze through trees',
+    category: 'narrator',
+    gender: 'neutral',
     characteristics: {
-      rate: 0.8,
-      pitch: 1.0,
+      elevenLabsVoiceId: 'ErXwobaYiN019PkySvjV', // Antoni - calm, soothing
+      elevenLabsModelId: 'eleven_turbo_v2_5',
+      stability: 0.9,
+      similarityBoost: 0.6,
+      style: 0.0,
+      useSpeakerBoost: true,
       volume: 0.7,
-      voiceGender: 'neutral',
-      voiceAge: 'adult',
-      pauseDuration: 700,
       emphasis: {
         words: ['nature', 'peaceful', 'gentle', 'forest', 'stream', 'whisper', 'calm'],
         pitchMultiplier: 0.9,
@@ -326,105 +359,24 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
 };
 
 class VoiceService {
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
-  private availableVoices: SpeechSynthesisVoice[] = [];
   private isInitialized = false;
+  private isServiceReady = false;
 
   constructor() {
-    this.initializeVoices();
-  }
-
-  private async initializeVoices() {
-    if ('speechSynthesis' in window) {
-      // Wait for voices to load
-      const loadVoices = () => {
-        this.availableVoices = speechSynthesis.getVoices();
-        this.isInitialized = true;
-        console.log('🎤 Voice service initialized with', this.availableVoices.length, 'voices');
-      };
-
-      if (speechSynthesis.getVoices().length > 0) {
-        loadVoices();
-      } else {
-        speechSynthesis.addEventListener('voiceschanged', loadVoices);
-      }
+    this.isServiceReady = audioService.isServiceReady();
+    
+    if (this.isServiceReady) {
+      console.log('🎤 VoiceService initialized with ElevenLabs integration');
+      this.isInitialized = true;
+    } else {
+      console.warn('⚠️ ElevenLabs API key not found. Voice features will be disabled.');
     }
-  }
-
-  private findBestVoice(characteristics: VoiceCharacteristics): SpeechSynthesisVoice | null {
-    if (this.availableVoices.length === 0) return null;
-
-    // Try to find voice by URI first
-    if (characteristics.voiceURI) {
-      const exactMatch = this.availableVoices.find(voice => voice.voiceURI === characteristics.voiceURI);
-      if (exactMatch) return exactMatch;
-    }
-
-    // Prioritize English voices with standard pronunciation
-    let candidates = this.availableVoices.filter(voice => {
-      const name = voice.name.toLowerCase();
-      const lang = voice.lang.toLowerCase();
-      
-      // Prefer English voices
-      if (!lang.includes('en')) return false;
-      
-      // Prefer US or UK English for standard pronunciation
-      if (lang.includes('en-us') || lang.includes('en-gb') || lang.includes('en-au')) {
-        return true;
-      }
-      
-      // Accept other English variants
-      return lang.startsWith('en');
-    });
-
-    // If no English voices found, use all voices
-    if (candidates.length === 0) {
-      candidates = this.availableVoices;
-    }
-
-    // Filter by gender and age preferences within English voices
-    const filteredCandidates = candidates.filter(voice => {
-      const name = voice.name.toLowerCase();
-      
-      // Gender filtering
-      if (characteristics.voiceGender === 'female') {
-        if (name.includes('male') && !name.includes('female')) {
-          return false;
-        }
-      } else if (characteristics.voiceGender === 'male') {
-        if (name.includes('female') && !name.includes('male')) {
-          return false;
-        }
-      }
-
-      // Age filtering
-      if (characteristics.voiceAge === 'child') {
-        return name.includes('child') || name.includes('kid') || name.includes('young');
-      }
-
-      return true;
-    });
-
-    // Use filtered candidates if available, otherwise use all English candidates
-    const finalCandidates = filteredCandidates.length > 0 ? filteredCandidates : candidates;
-
-    // Prefer local voices over network voices for better performance
-    const localVoices = finalCandidates.filter(voice => voice.localService);
-    if (localVoices.length > 0) {
-      return localVoices[0];
-    }
-
-    // Return the first suitable candidate
-    return finalCandidates[0] || this.availableVoices[0];
   }
 
   private preprocessText(text: string, personality: VoicePersonality): string {
     let processedText = text;
 
-    // Ensure standard English pronunciation - remove any accent modifications
-    // Keep text clean and use standard spelling
-
-    // Add emphasis to specific words (but maintain standard pronunciation)
+    // Add emphasis to specific words
     if (personality.characteristics.emphasis) {
       personality.characteristics.emphasis.words.forEach(word => {
         const regex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -432,105 +384,92 @@ class VoiceService {
       });
     }
 
-    // Character-specific modifications (keeping standard English)
+    // Character-specific modifications
     switch (personality.id) {
       case 'friendlyRobot':
-        // Add subtle robot-like pauses but keep standard pronunciation
-        processedText = `${processedText}`;
+        // Add subtle robot-like pauses
+        processedText = processedText.replace(/\./g, '. *pause*');
         break;
       
       case 'playfulFriend':
-        // Add enthusiasm but maintain clear pronunciation
-        processedText = processedText.replace(/!/g, '!');
+        // Add enthusiasm
+        processedText = processedText.replace(/!/g, '!!');
+        break;
+        
+      case 'squeakyFairy':
+        // Add fairy-like expressions
+        processedText = processedText.replace(/magic/gi, '*magical* magic');
         break;
     }
 
     return processedText;
   }
 
-  speak(text: string, personalityId: string = 'wiseStoryteller'): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!('speechSynthesis' in window)) {
-        reject(new Error('Speech synthesis not supported'));
-        return;
-      }
+  async speak(text: string, personalityId: string = 'wiseStoryteller'): Promise<void> {
+    if (!this.isServiceReady) {
+      throw new Error('ElevenLabs service is not available. Please check your API key configuration.');
+    }
 
-      // Stop any current speech
-      this.stop();
+    const personality = voicePersonalities[personalityId];
+    if (!personality) {
+      throw new Error(`Voice personality '${personalityId}' not found`);
+    }
 
-      const personality = voicePersonalities[personalityId];
-      if (!personality) {
-        reject(new Error(`Voice personality '${personalityId}' not found`));
-        return;
-      }
+    // Stop any current speech
+    this.stop();
 
-      const processedText = this.preprocessText(text, personality);
-      const utterance = new SpeechSynthesisUtterance(processedText);
-
-      // Apply voice characteristics
-      const characteristics = personality.characteristics;
-      utterance.rate = characteristics.rate;
-      utterance.pitch = characteristics.pitch;
-      utterance.volume = characteristics.volume;
-
-      // Find and set the best English voice
-      const bestVoice = this.findBestVoice(characteristics);
-      if (bestVoice) {
-        utterance.voice = bestVoice;
-        console.log('🎤 Using voice:', bestVoice.name, 'Language:', bestVoice.lang);
-      }
-
-      // Set up event handlers
-      utterance.onend = () => {
-        console.log('🎤 Speech completed for personality:', personalityId);
-        this.currentUtterance = null;
-        resolve();
+    try {
+      console.log('🎤 Starting ElevenLabs speech synthesis for:', personalityId);
+      
+      const audioConfig = {
+        voiceId: personality.characteristics.elevenLabsVoiceId,
+        modelId: personality.characteristics.elevenLabsModelId,
+        text: this.preprocessText(text, personality),
+        volume: personality.characteristics.volume,
+        stability: personality.characteristics.stability,
+        similarityBoost: personality.characteristics.similarityBoost
       };
 
-      utterance.onerror = (event) => {
-        console.error('🎤 Speech error:', event.error);
-        this.currentUtterance = null;
-        reject(new Error(`Speech synthesis error: ${event.error}`));
-      };
-
-      utterance.onstart = () => {
-        console.log('🎤 Speech started for personality:', personalityId);
-      };
-
-      // Store current utterance and speak
-      this.currentUtterance = utterance;
-      speechSynthesis.speak(utterance);
-    });
+      await audioService.playAudio(audioConfig);
+      console.log('✅ ElevenLabs speech completed for personality:', personalityId);
+    } catch (error) {
+      console.error('❌ ElevenLabs speech failed:', error);
+      throw error;
+    }
   }
 
   pause(): void {
-    if (speechSynthesis.speaking && !speechSynthesis.paused) {
-      speechSynthesis.pause();
-      console.log('⏸️ Speech paused');
+    if (this.isServiceReady) {
+      audioService.pause();
     }
   }
 
   resume(): void {
-    if (speechSynthesis.paused) {
-      speechSynthesis.resume();
-      console.log('▶️ Speech resumed');
+    if (this.isServiceReady) {
+      audioService.resume();
     }
   }
 
   stop(): void {
-    if (speechSynthesis.speaking || speechSynthesis.pending) {
-      speechSynthesis.cancel();
-      this.currentUtterance = null;
-      console.log('⏹️ Speech stopped');
+    if (this.isServiceReady) {
+      audioService.stop();
     }
   }
 
   isSpeaking(): boolean {
-    return speechSynthesis.speaking;
+    return this.isServiceReady ? audioService.isSpeaking() : false;
   }
 
   isPaused(): boolean {
-    return speechSynthesis.paused;
+    return this.isServiceReady ? audioService.isPaused() : false;
+  }
+
+  getCurrentTime(): number {
+    return this.isServiceReady ? audioService.getCurrentTime() : 0;
+  }
+
+  getDuration(): number {
+    return this.isServiceReady ? audioService.getDuration() : 0;
   }
 
   getAvailablePersonalities(): VoicePersonality[] {
@@ -542,10 +481,10 @@ class VoiceService {
   }
 
   // Test a voice personality with a sample phrase
-  testVoice(personalityId: string): Promise<void> {
+  async testVoice(personalityId: string): Promise<void> {
     const personality = voicePersonalities[personalityId];
     if (!personality) {
-      return Promise.reject(new Error(`Personality '${personalityId}' not found`));
+      throw new Error(`Personality '${personalityId}' not found`);
     }
 
     const samplePhrase = personality.samplePhrases[0] || "Hello! This is a test of my voice.";
@@ -585,6 +524,16 @@ class VoiceService {
 
     // Default to wise storyteller
     return 'wiseStoryteller';
+  }
+
+  // Check if ElevenLabs is available
+  isElevenLabsEnabled(): boolean {
+    return this.isServiceReady;
+  }
+
+  // Check if service is ready
+  isReady(): boolean {
+    return this.isServiceReady;
   }
 }
 
