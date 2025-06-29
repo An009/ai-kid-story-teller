@@ -361,6 +361,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
 class VoiceService {
   private isInitialized = false;
   private isServiceReady = false;
+  private currentSpeechId: string | null = null;
 
   constructor() {
     this.isServiceReady = audioService.isServiceReady();
@@ -415,11 +416,16 @@ class VoiceService {
       throw new Error(`Voice personality '${personalityId}' not found`);
     }
 
-    // Stop any current speech
+    // Generate unique speech ID for this request
+    const speechId = `speech-${Date.now()}-${Math.random()}`;
+    this.currentSpeechId = speechId;
+
+    // CRITICAL: Stop any existing speech before starting new one
     this.stop();
 
     try {
       console.log('🎤 Starting ElevenLabs speech synthesis for:', personalityId);
+      console.log('🎤 Speech ID:', speechId);
       
       const audioConfig = {
         voiceId: personality.characteristics.elevenLabsVoiceId,
@@ -430,11 +436,25 @@ class VoiceService {
         similarityBoost: personality.characteristics.similarityBoost
       };
 
+      // Check if this speech request is still current before playing
+      if (this.currentSpeechId !== speechId) {
+        console.log('🎤 Speech request cancelled - newer request in progress');
+        return;
+      }
+
       await audioService.playAudio(audioConfig);
-      console.log('✅ ElevenLabs speech completed for personality:', personalityId);
+      
+      // Only log completion if this is still the current speech
+      if (this.currentSpeechId === speechId) {
+        console.log('✅ ElevenLabs speech completed for personality:', personalityId);
+      }
     } catch (error) {
-      console.error('❌ ElevenLabs speech failed:', error);
-      throw error;
+      // Only handle error if this is still the current speech
+      if (this.currentSpeechId === speechId) {
+        console.error('❌ ElevenLabs speech failed:', error);
+        this.currentSpeechId = null;
+        throw error;
+      }
     }
   }
 
@@ -452,6 +472,8 @@ class VoiceService {
 
   stop(): void {
     if (this.isServiceReady) {
+      console.log('🛑 VoiceService stopping all speech');
+      this.currentSpeechId = null;
       audioService.stop();
     }
   }
@@ -535,9 +557,19 @@ class VoiceService {
   isReady(): boolean {
     return this.isServiceReady;
   }
+
+  // Emergency stop method
+  emergencyStop(): void {
+    console.log('🚨 VoiceService emergency stop');
+    this.currentSpeechId = null;
+    if (this.isServiceReady) {
+      audioService.emergencyStop();
+    }
+  }
 }
 
 export const voiceService = new VoiceService();
 
-// Export for debugging
+// Export for debugging and emergency cleanup
 (window as any).voiceService = voiceService;
+(window as any).emergencyStopVoice = () => voiceService.emergencyStop();

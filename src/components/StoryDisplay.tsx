@@ -61,7 +61,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     }
 
     return () => {
-      // Cleanup audio when component unmounts
+      // CRITICAL: Cleanup audio when component unmounts
+      console.log('🧹 StoryDisplay cleanup - stopping all audio');
       if (voiceService.isReady()) {
         voiceService.stop();
       }
@@ -115,6 +116,10 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       }
     } else {
       try {
+        // CRITICAL: Stop any existing audio before starting new one
+        voiceService.stop();
+        soundService.stopAll();
+        
         setIsReading(true);
         setCurrentWordIndex(0);
         setReadingProgress(0);
@@ -151,9 +156,13 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 
   const handleStop = () => {
     console.log('⏹️ Stop reading clicked');
+    
+    // CRITICAL: Force stop all audio
     if (isVoiceServiceReady) {
       voiceService.stop();
     }
+    soundService.stopAll();
+    
     setIsReading(false);
     setCurrentWordIndex(0);
     setReadingProgress(0);
@@ -292,7 +301,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               {/* Reading Controls */}
               <button
                 onClick={handleReadAloud}
-                disabled={!isVoiceServiceReady || (isReading && voiceService.isSpeaking() && !voiceService.isPaused())}
+                disabled={!isVoiceServiceReady}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg ${
                   isVoiceServiceReady
                     ? 'bg-teal text-white hover:bg-teal/80'
@@ -313,6 +322,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
                 <button
                   onClick={handleStop}
                   className="p-2 rounded-full transition-all duration-200 transform hover:scale-105 bg-gray-600 text-white hover:bg-gray-500"
+                  title="Stop reading"
                 >
                   <RotateCcw className="w-5 h-5" />
                 </button>
