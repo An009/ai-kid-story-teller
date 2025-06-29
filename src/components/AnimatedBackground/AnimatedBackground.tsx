@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Star } from 'lucide-react';
-import './AnimatedBackground.css';
+import React, { useEffect, useRef, useState } from "react";
+import { Star } from "lucide-react";
+import "./AnimatedBackground.css";
 
 interface Particle {
   id: number;
@@ -24,8 +24,8 @@ interface AnimatedBackgroundProps {
 const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   particleCount = 60,
   enableParticles = true,
-  blurIntensity = 2.5,
-  className = ''
+  blurIntensity = 40,
+  className = "",
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
@@ -43,7 +43,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       velocityX: (Math.random() - 0.5) * 0.5, // Slow movement
       velocityY: (Math.random() - 0.5) * 0.5,
       life: 0,
-      maxLife: Math.random() * 300 + 200 // Fade cycle duration
+      maxLife: Math.random() * 300 + 200, // Fade cycle duration
     };
   };
 
@@ -51,7 +51,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   useEffect(() => {
     if (!enableParticles) return;
 
-    particlesRef.current = Array.from({ length: particleCount }, (_, i) => 
+    particlesRef.current = Array.from({ length: particleCount }, (_, i) =>
       createParticle(i)
     );
   }, [particleCount, enableParticles]);
@@ -62,8 +62,9 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       setIsVisible(!document.hidden);
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
   // Animation loop
@@ -73,7 +74,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const updateCanvasSize = () => {
@@ -82,7 +83,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
     };
 
     updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
+    window.addEventListener("resize", updateCanvasSize);
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -102,7 +103,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         // Calculate fade in/out opacity
         const lifeCycle = particle.life / particle.maxLife;
         let fadeOpacity = particle.opacity;
-        
+
         if (lifeCycle < 0.2) {
           // Fade in
           fadeOpacity = particle.opacity * (lifeCycle / 0.2);
@@ -120,10 +121,10 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         // Draw star particle
         ctx.save();
         ctx.globalAlpha = Math.max(0, fadeOpacity);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = '#ffffff';
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = "#ffffff";
         ctx.shadowBlur = particle.size * 2;
-        
+
         // Draw star shape
         const centerX = particle.x;
         const centerY = particle.y;
@@ -137,7 +138,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
           const angle = (i * Math.PI) / spikes;
           const x = centerX + Math.cos(angle) * radius;
           const y = centerY + Math.sin(angle) * radius;
-          
+
           if (i === 0) {
             ctx.moveTo(x, y);
           } else {
@@ -146,13 +147,13 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         }
         ctx.closePath();
         ctx.fill();
-        
+
         // Add subtle glow effect
         ctx.beginPath();
         ctx.arc(centerX, centerY, particle.size * 1.5, 0, Math.PI * 2);
         ctx.globalAlpha = fadeOpacity * 0.3;
         ctx.fill();
-        
+
         ctx.restore();
       });
 
@@ -162,7 +163,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
     animate();
 
     return () => {
-      window.removeEventListener('resize', updateCanvasSize);
+      window.removeEventListener("resize", updateCanvasSize);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -172,17 +173,17 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   return (
     <div className={`animated-background ${className}`}>
       {/* Background Image with Blur */}
-      <div 
+      <div
         className="background-image"
         style={{
-          backgroundImage: 'url(/GPT_Image_1_A_highquality_3D_render_of_a_cute_Labubu_character_0.png)',
-          filter: `blur(${blurIntensity}px)`
+          backgroundImage: "url(/bg.jpg)",
+          filter: `blur(${blurIntensity}px)`,
         }}
       />
-      
+
       {/* Overlay for better content readability */}
       <div className="background-overlay" />
-      
+
       {/* Particle Canvas */}
       {enableParticles && (
         <canvas
@@ -191,7 +192,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
           aria-hidden="true"
         />
       )}
-      
+
       {/* Fallback for reduced motion */}
       <div className="reduced-motion-fallback">
         {Array.from({ length: 20 }, (_, i) => (
@@ -200,11 +201,11 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
             className="static-star"
             size={Math.random() * 8 + 4}
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
               opacity: Math.random() * 0.3 + 0.2,
-              color: 'white'
+              color: "white",
             }}
           />
         ))}
