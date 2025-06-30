@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle, Settings, VolumeX, Loader2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Save, ArrowLeft, Volume2, Award, CheckCircle, Settings, VolumeX, Loader2, AlertTriangle, Wrench } from 'lucide-react';
 import { Story } from '../types/Story';
 import { voiceService } from '../services/voiceService';
+import { audioService } from '../services/audioService';
 import VoiceSelector from './VoiceSelector';
+import AudioTroubleshootingPanel from './AudioTroubleshootingPanel';
 
 interface StoryDisplayProps {
   story: Story;
@@ -24,11 +26,14 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('wiseStoryteller');
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
+  const [showTroubleshooting, setShowTroubleshooting] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
   const [currentAudioTime, setCurrentAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isVoiceServiceReady, setIsVoiceServiceReady] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioQuality, setAudioQuality] = useState<'low' | 'medium' | 'high'>('medium');
+  const [retryCount, setRetryCount] = useState(0);
 
   const words = story.content.split(' ');
 
@@ -49,6 +54,9 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       const recommendedVoice = voiceService.getRecommendedVoice(story.content, story.character);
       setSelectedVoice(recommendedVoice);
       console.log('🎤 Recommended voice for story:', recommendedVoice);
+      
+      // Test API connection
+      testAudioConnection();
     } else {
       setAudioError('ElevenLabs service is not available. Please check your API key configuration.');
     }
@@ -61,6 +69,29 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       }
     };
   }, [story, audioEnabled]);
+
+  const testAudioConnection = async () => {
+    try {
+      const testResult = await audioService.testApiConnection();
+      if (!testResult.success) {
+        setAudioError(`Connection test failed: ${testResult.error}`);
+        setAudioQuality('low');
+      } else {
+        setAudioError(null);
+        // Set quality based on latency
+        if (testResult.latency && testResult.latency < 1000) {
+          setAudioQuality('high');
+        } else if (testResult.latency && testResult.latency < 3000) {
+          setAudioQuality('medium');
+        } else {
+          setAudioQuality('low');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Connection test failed:', error);
+      setAudioError('Unable to test connection to ElevenLabs');
+    }
+  };
 
   // Update audio progress for ElevenLabs
   useEffect(() => {
@@ -114,8 +145,13 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         setIsReading(true);
         setCurrentWordIndex(0);
         setReadingProgress(0);
+        setRetryCount(0);
         
         console.log('🎤 Starting speech with voice:', selectedVoice);
+        
+        // Get optimized settings for the story content
+        const recommendedSettings = audioService.getRecommendedSettings(story.content);
+        console.log('⚙️ Using optimized settings:', recommendedSettings);
         
         // Speak the entire story with ElevenLabs
         await voiceService.speak(story.content, selectedVoice);
@@ -130,7 +166,22 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         setIsReading(false);
         setCurrentWordIndex(0);
         setReadingProgress(0);
-        setAudioError(error instanceof Error ? error.message : 'Speech synthesis failed');
+        
+        const errorMessage = error instanceof Error ? error.message : 'Speech synthesis failed';
+        setAudioError(errorMessage);
+        
+        // Auto-retry for certain errors
+        if (retryCount < 2 && (
+          errorMessage.includes('network') || 
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('rate limit')
+        )) {
+          setRetryCount(prev => prev + 1);
+          console.log(`🔄 Auto-retrying speech (${retryCount + 1}/2)`);
+          setTimeout(() => {
+            handleReadAloud();
+          }, 2000 * (retryCount + 1));
+        }
       }
     }
   };
@@ -149,6 +200,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     setCurrentAudioTime(0);
     setAudioDuration(0);
     setAudioError(null);
+    setRetryCount(0);
   };
 
   const handleSave = () => {
@@ -196,6 +248,15 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
     }
   };
 
+  const getQualityColor = (quality: string) => {
+    switch (quality) {
+      case 'high': return 'text-green-500';
+      case 'medium': return 'text-yellow-500';
+      case 'low': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
+
   // Validate story content
   if (!story.content || story.content.trim().length === 0) {
     console.error('❌ Story content is empty or invalid');
@@ -230,6 +291,19 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         <div className="flex items-center space-x-3">
           {audioEnabled && (
             <>
+              {/* Troubleshooting Button */}
+              <button
+                onClick={() => setShowTroubleshooting(true)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 transform hover:scale-105 ${
+                  audioError
+                    ? 'bg-red-600 text-white hover:bg-red-500 animate-pulse'
+                    : 'bg-gray-600 text-white hover:bg-gray-500'
+                } shadow-md hover:shadow-lg`}
+              >
+                <Wrench className="w-5 h-5" />
+                <span>Diagnostics</span>
+              </button>
+
               {/* Voice Settings Button */}
               <button
                 onClick={() => setShowVoiceSelector(!showVoiceSelector)}
@@ -295,11 +369,40 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       {/* Audio Error Display */}
       {audioError && (
         <div className="mb-6 p-4 rounded-xl bg-red-900 border border-red-500">
-          <div className="flex items-center space-x-3">
-            <VolumeX className="w-5 h-5 text-red-400" />
-            <div>
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5" />
+            <div className="flex-1">
               <p className="font-medium text-red-400">Audio Service Error</p>
-              <p className="text-sm text-red-300">{audioError}</p>
+              <p className="text-sm text-red-300 mt-1">{audioError}</p>
+              {retryCount > 0 && (
+                <p className="text-xs text-red-400 mt-2">
+                  Retry attempt: {retryCount}/2
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowTroubleshooting(true)}
+              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Fix Issues
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Audio Quality Indicator */}
+      {isVoiceServiceReady && (
+        <div className="mb-6 p-3 rounded-lg bg-gray-800 border border-gray-700">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-400">Audio Quality:</span>
+              <span className={`font-medium ${getQualityColor(audioQuality)}`}>
+                {audioQuality.charAt(0).toUpperCase() + audioQuality.slice(1)}
+              </span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-400">Service:</span>
+              <span className="text-blue-400 font-medium">ElevenLabs Turbo v2.5</span>
             </div>
           </div>
         </div>
@@ -316,6 +419,13 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
           />
         </div>
       )}
+
+      {/* Troubleshooting Panel */}
+      <AudioTroubleshootingPanel
+        isOpen={showTroubleshooting}
+        onClose={() => setShowTroubleshooting(false)}
+        highContrast={highContrast}
+      />
 
       {/* Reading Progress Bar */}
       {isReading && readingProgress > 0 && (
@@ -344,6 +454,9 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
           <div className="mt-2 text-xs text-gray-400 flex items-center space-x-2">
             <span>🎤 ElevenLabs Enhanced Audio</span>
             <span>📖 Natural Voice Narration</span>
+            <span className={`${getQualityColor(audioQuality)}`}>
+              • {audioQuality.toUpperCase()} Quality
+            </span>
           </div>
         </div>
       )}
@@ -436,13 +549,15 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         {/* Debug Info for Story */}
         <div className="mt-4 p-3 rounded-lg text-xs bg-gray-900 text-gray-400 border border-gray-700">
           <details>
-            <summary className="cursor-pointer">📊 Story Stats</summary>
+            <summary className="cursor-pointer">📊 Story Stats & Audio Info</summary>
             <div className="mt-2 space-y-1">
               <div>Story ID: {story.id}</div>
               <div>Word Count: {words.length}</div>
               <div>Character Count: {story.content.length}</div>
               <div>Selected Voice: {selectedVoice}</div>
               <div>ElevenLabs Ready: {isVoiceServiceReady ? 'Yes' : 'No'}</div>
+              <div>Audio Quality: {audioQuality}</div>
+              <div>Retry Count: {retryCount}</div>
               <div>Created: {story.createdAt}</div>
             </div>
           </details>

@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { X, Eye, Type, Volume2, VolumeX, Headphones } from 'lucide-react';
+import { X, Eye, Type, Volume2, VolumeX, Headphones, AlertTriangle, CheckCircle, Wrench } from 'lucide-react';
 import { soundService } from '../services/soundService';
 import { voiceService } from '../services/voiceService';
+import { audioService } from '../services/audioService';
 
 interface AccessibilityPanelProps {
   highContrast: boolean;
@@ -28,6 +29,9 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
   const [masterVolume, setMasterVolume] = useState(0.7);
   const [isVoiceServiceReady, setIsVoiceServiceReady] = useState(false);
+  const [audioStatus, setAudioStatus] = useState<'checking' | 'ready' | 'error'>('checking');
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [showAudioDiagnostics, setShowAudioDiagnostics] = useState(false);
 
   // Handle modal open animations and body scroll
   useEffect(() => {
@@ -35,7 +39,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
     setIsClosing(false);
     
     // Check voice service status
-    setIsVoiceServiceReady(voiceService.isReady());
+    checkAudioServices();
     
     // Trigger enter animations
     if (modalRef.current && backdropRef.current) {
@@ -47,6 +51,31 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
       document.body.classList.remove('modal-open');
     };
   }, []);
+
+  const checkAudioServices = async () => {
+    setAudioStatus('checking');
+    setIsVoiceServiceReady(voiceService.isReady());
+    
+    if (voiceService.isReady()) {
+      try {
+        // Test API connection
+        const testResult = await audioService.testApiConnection();
+        if (testResult.success) {
+          setAudioStatus('ready');
+          setAudioError(null);
+        } else {
+          setAudioStatus('error');
+          setAudioError(testResult.error || 'Connection test failed');
+        }
+      } catch (error) {
+        setAudioStatus('error');
+        setAudioError(error instanceof Error ? error.message : 'Unknown error');
+      }
+    } else {
+      setAudioStatus('error');
+      setAudioError('ElevenLabs API key not configured');
+    }
+  };
 
   const handleClose = () => {
     if (isClosing) return;
@@ -84,6 +113,45 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
     setMasterVolume(volume);
     soundService.setMasterVolume(volume);
     console.log('🔊 Master volume set to:', volume);
+  };
+
+  const handleEmergencyStop = () => {
+    audioService.emergencyStop();
+    voiceService.emergencyStop();
+    console.log('🚨 Emergency stop activated');
+  };
+
+  const getStatusIcon = () => {
+    switch (audioStatus) {
+      case 'ready':
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
+      case 'error':
+        return <AlertTriangle className="w-4 h-4 text-red-400" />;
+      default:
+        return <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />;
+    }
+  };
+
+  const getStatusColor = () => {
+    switch (audioStatus) {
+      case 'ready':
+        return 'text-green-400';
+      case 'error':
+        return 'text-red-400';
+      default:
+        return 'text-blue-400';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (audioStatus) {
+      case 'ready':
+        return 'ElevenLabs Ready';
+      case 'error':
+        return 'Service Error';
+      default:
+        return 'Checking...';
+    }
   };
 
   return (
@@ -268,6 +336,65 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
               </div>
             )}
 
+            {/* Audio Service Status */}
+            <div className={`p-4 rounded-lg border ${
+              audioStatus === 'ready' 
+                ? 'bg-green-900 border-green-500' 
+                : audioStatus === 'error'
+                  ? 'bg-red-900 border-red-500'
+                  : 'bg-blue-900 border-blue-500'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {getStatusIcon()}
+                  <span className={`text-sm font-medium ${getStatusColor()}`}>
+                    Audio Service: {getStatusText()}
+                  </span>
+                </div>
+                {audioStatus === 'error' && (
+                  <button
+                    onClick={() => setShowAudioDiagnostics(!showAudioDiagnostics)}
+                    className="flex items-center space-x-1 px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    <Wrench className="w-3 h-3" />
+                    <span>Fix</span>
+                  </button>
+                )}
+              </div>
+              
+              {audioError && (
+                <p className="text-xs mt-2 text-red-300">
+                  {audioError}
+                </p>
+              )}
+              
+              {showAudioDiagnostics && audioStatus === 'error' && (
+                <div className="mt-3 p-3 bg-red-800 rounded border border-red-600">
+                  <h5 className="text-sm font-medium text-red-300 mb-2">Quick Fixes:</h5>
+                  <ul className="text-xs text-red-200 space-y-1">
+                    <li>• Check your ElevenLabs API key in .env file</li>
+                    <li>• Verify your internet connection</li>
+                    <li>• Ensure you have ElevenLabs credits available</li>
+                    <li>• Try refreshing the page</li>
+                  </ul>
+                  <div className="flex space-x-2 mt-3">
+                    <button
+                      onClick={checkAudioServices}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                    >
+                      Retest
+                    </button>
+                    <button
+                      onClick={handleEmergencyStop}
+                      className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                    >
+                      Emergency Stop
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Audio Technology Info */}
             {audioEnabled && (
               <div className="p-4 rounded-lg bg-gray-700 border border-gray-600">
@@ -288,24 +415,6 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                 </div>
               </div>
             )}
-
-            {/* ElevenLabs Status */}
-            <div className={`p-3 rounded-lg border ${
-              isVoiceServiceReady 
-                ? 'bg-green-900 border-green-500' 
-                : 'bg-yellow-900 border-yellow-500'
-            }`}>
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  isVoiceServiceReady ? 'bg-green-400' : 'bg-yellow-400'
-                }`} />
-                <span className={`text-sm font-medium ${
-                  isVoiceServiceReady ? 'text-green-400' : 'text-yellow-400'
-                }`}>
-                  ElevenLabs Service: {isVoiceServiceReady ? 'Ready' : 'Not Configured'}
-                </span>
-              </div>
-            </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-600">
