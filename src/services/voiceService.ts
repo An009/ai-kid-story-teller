@@ -40,12 +40,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.8,
       style: 0.2,
       useSpeakerBoost: true,
-      volume: 0.9,
-      emphasis: {
-        words: ['wow', 'amazing', 'cool', 'awesome', 'wonderful', 'exciting'],
-        pitchMultiplier: 1.6,
-        rateMultiplier: 0.8
-      }
+      volume: 0.9
     },
     samplePhrases: [
       "Oh wow! This is the best story ever!",
@@ -73,12 +68,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.7,
       style: 0.1,
       useSpeakerBoost: true,
-      volume: 0.8,
-      emphasis: {
-        words: ['royal', 'magnificent', 'elegant', 'gracious', 'noble', 'beautiful'],
-        pitchMultiplier: 1.1,
-        rateMultiplier: 0.7
-      }
+      volume: 0.8
     },
     samplePhrases: [
       "Good evening, dear friends. It is my honor to share this tale with you.",
@@ -106,12 +96,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.6,
       style: 0.0,
       useSpeakerBoost: true,
-      volume: 0.7,
-      emphasis: {
-        words: ['remember', 'wisdom', 'long ago', 'experience', 'learned', 'important'],
-        pitchMultiplier: 0.9,
-        rateMultiplier: 0.6
-      }
+      volume: 0.7
     },
     samplePhrases: [
       "Ah, yes... I remember a tale from long, long ago.",
@@ -139,12 +124,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.8,
       style: 0.3,
       useSpeakerBoost: true,
-      volume: 1.0,
-      emphasis: {
-        words: ['magic', 'spell', 'enchantment', 'power', 'ancient', 'mystical', 'behold'],
-        pitchMultiplier: 0.5,
-        rateMultiplier: 0.5
-      }
+      volume: 1.0
     },
     samplePhrases: [
       "Behold! The ancient magic awakens from its slumber!",
@@ -156,105 +136,6 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       'Dramatic pauses before magical words',
       'Authoritative, commanding presence',
       'Rich, theatrical delivery'
-    ]
-  },
-
-  squeakyFairy: {
-    id: 'squeakyFairy',
-    name: 'Excited Fairy',
-    description: 'A tiny, high-pitched voice with infectious enthusiasm',
-    category: 'character',
-    gender: 'female',
-    characteristics: {
-      elevenLabsVoiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy - light, playful
-      elevenLabsModelId: 'eleven_turbo_v2_5',
-      stability: 0.7,
-      similarityBoost: 0.9,
-      style: 0.4,
-      useSpeakerBoost: true,
-      volume: 0.8,
-      emphasis: {
-        words: ['sparkle', 'glitter', 'magic', 'tiny', 'flutter', 'shimmer', 'wonderful'],
-        pitchMultiplier: 1.9,
-        rateMultiplier: 1.6
-      }
-    },
-    samplePhrases: [
-      "Oh my! Look at all the sparkly magic dust!",
-      "Flutter, flutter! I can make flowers bloom with just a touch!",
-      "Oh my stars! This is the most magical day ever!"
-    ],
-    mannerisms: [
-      'Very high, bell-like voice',
-      'Quick, excited speech patterns',
-      'Light, airy delivery',
-      'Emphasizes magical words with extra pitch'
-    ]
-  },
-
-  adventurousCaptain: {
-    id: 'adventurousCaptain',
-    name: 'Adventurous Captain',
-    description: 'A confident sea captain with clear, commanding voice',
-    category: 'character',
-    gender: 'male',
-    characteristics: {
-      elevenLabsVoiceId: 'yoZ06aMxZJJ28mfd3POQ', // Sam - confident, clear
-      elevenLabsModelId: 'eleven_turbo_v2_5',
-      stability: 0.8,
-      similarityBoost: 0.7,
-      style: 0.2,
-      useSpeakerBoost: true,
-      volume: 0.9,
-      emphasis: {
-        words: ['adventure', 'treasure', 'ship', 'sea', 'journey', 'brave', 'courage'],
-        pitchMultiplier: 0.7,
-        rateMultiplier: 0.8
-      }
-    },
-    samplePhrases: [
-      "Ahoy there, friends! Gather around for a tale of the seven seas!",
-      "Every great adventure begins with a single step onto the ship!",
-      "The treasure we seek is not gold, but the friends we make along the way!"
-    ],
-    mannerisms: [
-      'Confident, commanding voice',
-      'Clear, nautical delivery',
-      'Inspiring and motivational tone',
-      'Strong, adventurous spirit'
-    ]
-  },
-
-  friendlyRobot: {
-    id: 'friendlyRobot',
-    name: 'Friendly Robot',
-    description: 'A helpful AI companion with precise pronunciation and warmth',
-    category: 'character',
-    gender: 'neutral',
-    characteristics: {
-      elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam - clear, neutral
-      elevenLabsModelId: 'eleven_turbo_v2_5',
-      stability: 0.9,
-      similarityBoost: 0.6,
-      style: 0.0,
-      useSpeakerBoost: true,
-      volume: 0.8,
-      emphasis: {
-        words: ['compute', 'analyze', 'process', 'data', 'system', 'function', 'helpful'],
-        pitchMultiplier: 1.0,
-        rateMultiplier: 0.9
-      }
-    },
-    samplePhrases: [
-      "Story processing complete. Initiating narrative sequence.",
-      "According to my calculations, this adventure has a ninety-nine percent chance of being amazing!",
-      "Happiness levels at maximum capacity! Ready to begin story time!"
-    ],
-    mannerisms: [
-      'Precise, measured speech patterns',
-      'Technical terminology mixed with emotion',
-      'Consistent rhythm and timing',
-      'Warm, helpful delivery'
     ]
   },
 
@@ -271,12 +152,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.7,
       style: 0.1,
       useSpeakerBoost: true,
-      volume: 0.8,
-      emphasis: {
-        words: ['once upon a time', 'long ago', 'legend', 'tale', 'story', 'moral', 'remember'],
-        pitchMultiplier: 1.1,
-        rateMultiplier: 0.8
-      }
+      volume: 0.8
     },
     samplePhrases: [
       "Once upon a time, in a land far, far away...",
@@ -304,12 +180,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.8,
       style: 0.3,
       useSpeakerBoost: true,
-      volume: 0.9,
-      emphasis: {
-        words: ['fun', 'silly', 'funny', 'laugh', 'play', 'game', 'giggle'],
-        pitchMultiplier: 1.3,
-        rateMultiplier: 1.2
-      }
+      volume: 0.9
     },
     samplePhrases: [
       "Hey there, friend! Ready for some fun and silly adventures?",
@@ -337,12 +208,7 @@ export const voicePersonalities: Record<string, VoicePersonality> = {
       similarityBoost: 0.6,
       style: 0.0,
       useSpeakerBoost: true,
-      volume: 0.7,
-      emphasis: {
-        words: ['nature', 'peaceful', 'gentle', 'forest', 'stream', 'whisper', 'calm'],
-        pitchMultiplier: 0.9,
-        rateMultiplier: 0.7
-      }
+      volume: 0.7
     },
     samplePhrases: [
       "Listen... can you hear the gentle whisper of the wind through the trees?",
@@ -377,31 +243,18 @@ class VoiceService {
   private preprocessText(text: string, personality: VoicePersonality): string {
     let processedText = text;
 
-    // Add emphasis to specific words
-    if (personality.characteristics.emphasis) {
-      personality.characteristics.emphasis.words.forEach(word => {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        processedText = processedText.replace(regex, `${word}`);
-      });
-    }
+    // Clean up text for better narration
+    processedText = processedText
+      .replace(/\n\n/g, '. ') // Replace double newlines with periods
+      .replace(/\n/g, ' ') // Replace single newlines with spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
 
-    // Character-specific modifications
-    switch (personality.id) {
-      case 'friendlyRobot':
-        // Add subtle robot-like pauses
-        processedText = processedText.replace(/\./g, '. *pause*');
-        break;
-      
-      case 'playfulFriend':
-        // Add enthusiasm
-        processedText = processedText.replace(/!/g, '!!');
-        break;
-        
-      case 'squeakyFairy':
-        // Add fairy-like expressions
-        processedText = processedText.replace(/magic/gi, '*magical* magic');
-        break;
-    }
+    // Add natural pauses for better narration flow
+    processedText = processedText
+      .replace(/\. /g, '. <break time="0.5s"/> ') // Add pauses after sentences
+      .replace(/! /g, '! <break time="0.3s"/> ') // Add pauses after exclamations
+      .replace(/\? /g, '? <break time="0.4s"/> '); // Add pauses after questions
 
     return processedText;
   }
@@ -521,10 +374,7 @@ class VoiceService {
     if (character) {
       const char = character.toLowerCase();
       if (char.includes('princess')) return 'regalPrincess';
-      if (char.includes('captain') || char.includes('pirate')) return 'adventurousCaptain';
       if (char.includes('wizard') || char.includes('mage')) return 'boomingWizard';
-      if (char.includes('fairy')) return 'squeakyFairy';
-      if (char.includes('robot')) return 'friendlyRobot';
     }
 
     // Content-based recommendations

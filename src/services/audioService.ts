@@ -21,6 +21,8 @@ class AudioService {
   private isInitialized: boolean = false;
   private audioQueue: HTMLAudioElement[] = [];
   private isPlaying: boolean = false;
+  private currentTime: number = 0;
+  private duration: number = 0;
 
   constructor() {
     this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
@@ -64,6 +66,8 @@ class AudioService {
     this.audioQueue = [];
     
     this.isPlaying = false;
+    this.currentTime = 0;
+    this.duration = 0;
   }
 
   async generateSpeech(config: AudioConfig): Promise<Blob> {
@@ -108,40 +112,6 @@ class AudioService {
     return await response.blob();
   }
 
-  async generateSoundEffect(config: SoundEffectConfig): Promise<Blob> {
-    if (!this.isInitialized) {
-      throw new Error('ElevenLabs API key not configured');
-    }
-
-    console.log('🔊 Generating sound effect with ElevenLabs:', config.prompt);
-
-    const response = await fetch(
-      'https://api.elevenlabs.io/v1/sound-generation',
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': this.apiKey
-        },
-        body: JSON.stringify({
-          text: config.prompt,
-          duration_seconds: config.duration || 3.0,
-          prompt_influence: 0.3
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ ElevenLabs Sound Generation API error:', response.status, errorText);
-      throw new Error(`Sound effect generation failed: ${response.status} ${response.statusText}`);
-    }
-
-    console.log('✅ Sound effect generated successfully');
-    return await response.blob();
-  }
-
   async playAudio(config: AudioConfig): Promise<void> {
     try {
       // CRITICAL: Force stop all existing audio before starting new one
@@ -157,12 +127,23 @@ class AudioService {
       this.currentAudio.volume = Math.max(0, Math.min(1, config.volume || 1));
       this.currentAudio.loop = config.loop || false;
 
-      // Set up event listeners for proper cleanup
+      // Set up event listeners for proper cleanup and progress tracking
+      this.currentAudio.addEventListener('loadedmetadata', () => {
+        this.duration = this.currentAudio?.duration || 0;
+        console.log('🎵 Audio duration:', this.duration);
+      });
+
+      this.currentAudio.addEventListener('timeupdate', () => {
+        this.currentTime = this.currentAudio?.currentTime || 0;
+      });
+
       this.currentAudio.addEventListener('ended', () => {
         console.log('🎵 Audio playback ended');
         URL.revokeObjectURL(audioUrl);
         this.currentAudio = null;
         this.isPlaying = false;
+        this.currentTime = 0;
+        this.duration = 0;
       });
 
       this.currentAudio.addEventListener('error', (e) => {
@@ -170,11 +151,8 @@ class AudioService {
         URL.revokeObjectURL(audioUrl);
         this.currentAudio = null;
         this.isPlaying = false;
-      });
-
-      // Ensure only one audio plays at a time
-      this.currentAudio.addEventListener('loadstart', () => {
-        console.log('🎵 Audio loading started - ensuring single playback');
+        this.currentTime = 0;
+        this.duration = 0;
       });
 
       await this.currentAudio.play();
@@ -182,49 +160,8 @@ class AudioService {
     } catch (error) {
       console.error('❌ Audio playback failed:', error);
       this.isPlaying = false;
-      throw error;
-    }
-  }
-
-  async playSoundEffect(config: SoundEffectConfig): Promise<void> {
-    try {
-      // Don't interrupt main audio for sound effects, but limit concurrent effects
-      if (this.audioQueue.length > 2) {
-        console.log('🔊 Too many sound effects queued, skipping');
-        return;
-      }
-
-      const audioBlob = await this.generateSoundEffect(config);
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      const audio = new Audio(audioUrl);
-      audio.volume = Math.max(0, Math.min(1, config.volume || 0.5));
-      audio.loop = config.loop || false;
-
-      // Add to queue for tracking
-      this.audioQueue.push(audio);
-
-      // Clean up when finished
-      audio.addEventListener('ended', () => {
-        URL.revokeObjectURL(audioUrl);
-        const index = this.audioQueue.indexOf(audio);
-        if (index > -1) {
-          this.audioQueue.splice(index, 1);
-        }
-      });
-
-      audio.addEventListener('error', () => {
-        URL.revokeObjectURL(audioUrl);
-        const index = this.audioQueue.indexOf(audio);
-        if (index > -1) {
-          this.audioQueue.splice(index, 1);
-        }
-      });
-
-      await audio.play();
-      console.log('🔊 Sound effect playback started');
-    } catch (error) {
-      console.error('❌ Sound effect playback failed:', error);
+      this.currentTime = 0;
+      this.duration = 0;
       throw error;
     }
   }
@@ -264,11 +201,11 @@ class AudioService {
   }
 
   getCurrentTime(): number {
-    return this.currentAudio?.currentTime || 0;
+    return this.currentTime;
   }
 
   getDuration(): number {
-    return this.currentAudio?.duration || 0;
+    return this.duration;
   }
 
   // Method to check if any audio is currently active
